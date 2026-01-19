@@ -23,6 +23,12 @@ export interface SourceVideo {
     fps: number
     /** Aspect ratio: '16:9' or '9:16' */
     aspectRatio: '16:9' | '9:16'
+    /** Optional: Voiceover audio URL */
+    voiceoverUrl?: string
+    /** Optional: Background music URL */
+    bgmUrl?: string
+    /** Optional: SFX/extracted audio URL */
+    sfxUrl?: string
 }
 
 export interface SourceShot {
@@ -92,8 +98,13 @@ export interface VideoClip extends BaseClip {
     muted: boolean
 }
 
+/** Audio track types for multi-track architecture */
+export type AudioTrackType = 'voiceover' | 'bgm' | 'sfx' | 'custom'
+
 export interface AudioClip extends BaseClip {
     type: 'audio'
+    /** Audio track type for production workflow */
+    trackType: AudioTrackType
     /** Source: 'original' or custom audio URL */
     source: 'original' | string
     /** Trim: start offset in source */

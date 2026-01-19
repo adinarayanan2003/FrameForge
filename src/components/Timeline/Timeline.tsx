@@ -83,11 +83,39 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [selectedClipId])
 
-    // Track configuration
+    // Multi-track configuration (Production)
+    // Track 0: Video, Track 1: Voiceover, Track 2: BGM, Track 3: SFX, Track 4: Captions
     const tracks = [
-        { id: 'video', label: 'Video', clips: videoClips, color: 'bg-blue-500/80' },
-        { id: 'subtitles', label: 'Subtitles', clips: subtitleClips, color: 'bg-yellow-500/80' },
-        { id: 'audio', label: 'Audio', clips: audioClips, color: 'bg-green-500/80' },
+        {
+            id: 'video',
+            label: 'Video',
+            clips: videoClips,
+            color: 'bg-blue-500/80'
+        },
+        {
+            id: 'voiceover',
+            label: 'Voiceover',
+            clips: audioClips.filter(c => c.trackType === 'voiceover'),
+            color: 'bg-green-500/80'
+        },
+        {
+            id: 'bgm',
+            label: 'BGM',
+            clips: audioClips.filter(c => c.trackType === 'bgm'),
+            color: 'bg-purple-500/80'
+        },
+        {
+            id: 'sfx',
+            label: 'SFX',
+            clips: audioClips.filter(c => c.trackType === 'sfx' || c.trackType === 'custom'),
+            color: 'bg-orange-500/80'
+        },
+        {
+            id: 'captions',
+            label: 'Captions',
+            clips: subtitleClips,
+            color: 'bg-yellow-500/80'
+        },
     ]
 
     return (

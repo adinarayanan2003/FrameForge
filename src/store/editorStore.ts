@@ -138,7 +138,7 @@ export const useEditorStore = create<EditorStore>()(
             if (!shots.length || !source) return
 
             set((state) => {
-                // Create video clips from shots
+                // Track 0: Video clips from shots
                 const videoClips: VideoClip[] = shots.map((shot) => ({
                     id: `video-${shot.shotId}`,
                     type: 'video',
@@ -156,14 +156,14 @@ export const useEditorStore = create<EditorStore>()(
                         saturation: 0,
                     },
                     volume: 1,
-                    muted: true,
+                    muted: true, // Audio handled by separate tracks
                 }))
 
-                // Create subtitle clips from voiceovers
+                // Track 4: Subtitle clips from voiceovers
                 const subtitleClips: SubtitleClip[] = shots.map((shot) => ({
                     id: `subtitle-${shot.shotId}`,
                     type: 'subtitle',
-                    track: 1,
+                    track: 4,
                     timelineStart: shot.startTime,
                     timelineEnd: shot.endTime,
                     locked: false,
@@ -181,24 +181,69 @@ export const useEditorStore = create<EditorStore>()(
                     },
                 }))
 
-                // Create audio clip for entire video
-                const audioClip: AudioClip = {
-                    id: 'audio-main',
-                    type: 'audio',
-                    track: 2,
-                    timelineStart: 0,
-                    timelineEnd: source.duration,
-                    locked: false,
-                    source: 'original',
-                    sourceStart: 0,
-                    sourceEnd: source.duration,
-                    volume: 1,
-                    fadeIn: 0,
-                    fadeOut: 0,
-                    muted: false,
+                // Track 1: Voiceover audio (if available)
+                const audioClips: AudioClip[] = []
+
+                if (source.voiceoverUrl) {
+                    audioClips.push({
+                        id: 'audio-voiceover',
+                        type: 'audio',
+                        track: 1,
+                        trackType: 'voiceover',
+                        timelineStart: 0,
+                        timelineEnd: source.duration,
+                        locked: false,
+                        source: source.voiceoverUrl,
+                        sourceStart: 0,
+                        sourceEnd: source.duration,
+                        volume: 1,
+                        fadeIn: 0,
+                        fadeOut: 0,
+                        muted: false,
+                    })
                 }
 
-                state.clips = [...videoClips, ...subtitleClips, audioClip]
+                // Track 2: BGM audio (if available)
+                if (source.bgmUrl) {
+                    audioClips.push({
+                        id: 'audio-bgm',
+                        type: 'audio',
+                        track: 2,
+                        trackType: 'bgm',
+                        timelineStart: 0,
+                        timelineEnd: source.duration,
+                        locked: false,
+                        source: source.bgmUrl,
+                        sourceStart: 0,
+                        sourceEnd: source.duration,
+                        volume: 0.3, // Default lower volume for BGM
+                        fadeIn: 1,
+                        fadeOut: 1,
+                        muted: false,
+                    })
+                }
+
+                // Track 3: SFX audio (extracted from video, if available)
+                if (source.sfxUrl) {
+                    audioClips.push({
+                        id: 'audio-sfx',
+                        type: 'audio',
+                        track: 3,
+                        trackType: 'sfx',
+                        timelineStart: 0,
+                        timelineEnd: source.duration,
+                        locked: false,
+                        source: source.sfxUrl,
+                        sourceStart: 0,
+                        sourceEnd: source.duration,
+                        volume: 0.5,
+                        fadeIn: 0,
+                        fadeOut: 0,
+                        muted: false,
+                    })
+                }
+
+                state.clips = [...videoClips, ...audioClips, ...subtitleClips]
                 state.isDirty = false
             })
         },
@@ -243,11 +288,12 @@ export const useEditorStore = create<EditorStore>()(
                 customVideoUrl: videoUrl,
             }
 
-            // Create a matching audio clip for the imported video
+            // Create a matching audio clip for the imported video (SFX track)
             const newAudioClip: AudioClip = {
                 id: `custom-audio-${clipId}`,
                 type: 'audio',
-                track: 2,
+                track: 3,
+                trackType: 'sfx',
                 timelineStart: timelineEnd,
                 timelineEnd: timelineEnd + duration,
                 locked: false,
