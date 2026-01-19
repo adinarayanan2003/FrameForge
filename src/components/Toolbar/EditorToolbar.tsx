@@ -19,7 +19,9 @@ import {
     VolumeX,
     Lock,
     Unlock,
-    X
+    X,
+    Monitor,
+    Smartphone
 } from 'lucide-react'
 
 interface EditorToolbarProps {
@@ -43,6 +45,8 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         deleteClip,
         updateClip,
         splitClipAtPlayhead,
+        exportSettings,
+        toggleAspectRatio,
     } = useEditorStore()
 
     const canUndo = useEditorStore(selectCanUndo)
@@ -155,6 +159,18 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                         {selectedClip.muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
                     </button>
                 )}
+
+                <div className="w-[1px] h-4 bg-border/20 mx-2" />
+
+                {/* Aspect Ratio Toggle */}
+                <button
+                    onClick={toggleAspectRatio}
+                    className="flex items-center gap-2 px-3 py-1.5 text-secondary hover:text-foreground hover:bg-card/50 rounded-lg transition-colors"
+                    title={`Switch to ${exportSettings.aspectRatio === '16:9' ? '9:16' : '16:9'} aspect ratio`}
+                >
+                    {exportSettings.aspectRatio === '16:9' ? <Monitor size={18} /> : <Smartphone size={18} />}
+                    <span className="text-xs font-medium">{exportSettings.aspectRatio}</span>
+                </button>
             </div>
 
             {/* Right section: Save and Export */}

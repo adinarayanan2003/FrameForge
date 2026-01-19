@@ -287,6 +287,9 @@ export interface EditorState {
         format: 'mp4' | 'webm'
         quality: 'draft' | 'standard' | 'high'
         includeAudio: boolean
+        aspectRatio: '16:9' | '9:16'
+        width: number
+        height: number
     }
     /** Whether there are unsaved changes */
     isDirty: boolean

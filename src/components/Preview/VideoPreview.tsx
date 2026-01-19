@@ -41,9 +41,9 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({ className = '' }) =>
             timeline: {
                 duration: Math.max(...clips.map((c) => c.timelineEnd), source.duration),
                 fps: source.fps,
-                width: source.width,
-                height: source.height,
-                aspectRatio: source.aspectRatio,
+                width: exportSettings.width,
+                height: exportSettings.height,
+                aspectRatio: exportSettings.aspectRatio,
             },
             clips,
             transitions,
@@ -146,7 +146,7 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({ className = '' }) =>
     }
 
     // Determine aspect ratio class
-    const aspectClass = source.aspectRatio === '9:16'
+    const aspectClass = exportSettings.aspectRatio === '9:16'
         ? 'aspect-[9/16] max-h-full'
         : 'aspect-video max-h-full'
 

@@ -45,6 +45,9 @@ const initialState: EditorState = {
         format: 'mp4',
         quality: 'high',
         includeAudio: true,
+        aspectRatio: '16:9',
+        width: 1920,
+        height: 1080,
     },
     isDirty: false,
 }
@@ -95,6 +98,7 @@ interface EditorStore extends EditorState {
 
     // Export actions
     setExportSettings: (settings: Partial<EditorState['exportSettings']>) => void
+    toggleAspectRatio: () => void
     generateManifest: () => EditManifest | null
 
     // State actions
@@ -115,6 +119,9 @@ export const useEditorStore = create<EditorStore>()(
         setSource: (source) => {
             set((state) => {
                 state.source = source
+                state.exportSettings.aspectRatio = source.aspectRatio
+                state.exportSettings.width = source.width
+                state.exportSettings.height = source.height
                 state.isDirty = true
             })
         },
@@ -507,6 +514,21 @@ export const useEditorStore = create<EditorStore>()(
             })
         },
 
+        toggleAspectRatio: () => {
+            set((state) => {
+                const current = state.exportSettings.aspectRatio
+                const next = current === '16:9' ? '9:16' : '16:9'
+                state.exportSettings.aspectRatio = next
+
+                // Swap dimensions
+                const w = state.exportSettings.width
+                const h = state.exportSettings.height
+                state.exportSettings.width = h
+                state.exportSettings.height = w
+                state.isDirty = true
+            })
+        },
+
         generateManifest: () => {
             const state = get()
             if (!state.source) return null
@@ -520,9 +542,9 @@ export const useEditorStore = create<EditorStore>()(
                 timeline: {
                     duration: Math.max(...state.clips.map((c) => c.timelineEnd), 0),
                     fps: state.source.fps,
-                    width: state.source.width,
-                    height: state.source.height,
-                    aspectRatio: state.source.aspectRatio,
+                    width: state.exportSettings.width,
+                    height: state.exportSettings.height,
+                    aspectRatio: state.exportSettings.aspectRatio,
                 },
                 clips: state.clips,
                 transitions: state.transitions,
