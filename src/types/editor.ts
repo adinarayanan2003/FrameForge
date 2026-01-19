@@ -306,6 +306,8 @@ export interface EditorState {
     }
     /** Whether there are unsaved changes */
     isDirty: boolean
+    /** Clipboard for copy/paste */
+    clipboard: Clip | null
 }
 
 // ============================================================================

@@ -10,6 +10,7 @@
 import React, { useCallback, useState, useRef } from 'react'
 import { Clip, VideoClip, AudioClip, SubtitleClip } from '@/types/editor'
 import { useEditorStore } from '@/store/editorStore'
+import { AudioWaveform } from './AudioWaveform'
 
 interface TimelineClipProps {
     clip: Clip
@@ -49,6 +50,11 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
 
         setIsDragging(true)
         selectClip(clip.id)
+
+        // Snapping state with hysteresis
+        let currentSnapPoint: number | null = null // The point we're snapped to (null = not snapped)
+        let snapEdge: 'start' | 'end' | null = null // Which edge is snapped
+
         dragStartRef.current = {
             x: e.clientX,
             originalStart: clip.timelineStart,
@@ -60,9 +66,85 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
 
             const deltaX = moveEvent.clientX - dragStartRef.current.x
             const deltaTime = deltaX / zoom
-            const newStart = Math.max(0, dragStartRef.current.originalStart + deltaTime)
 
-            moveClip(clip.id, newStart)
+            // Raw calculated new position based on mouse
+            const rawNewStart = Math.max(0, dragStartRef.current.originalStart + deltaTime)
+            const duration = dragStartRef.current.originalEnd - dragStartRef.current.originalStart
+            const rawNewEnd = rawNewStart + duration
+
+            // Thresholds
+            const snapThresholdTime = 12 / zoom  // Snap when within this distance
+            const breakoutThresholdTime = 20 / zoom  // Unsnap when beyond this distance
+
+            // Find all snap candidates
+            const allClips = useEditorStore.getState().clips
+            const snapPoints = [0]
+
+            allClips.forEach(c => {
+                if (c.track === clip.track && c.id !== clip.id) {
+                    snapPoints.push(c.timelineStart)
+                    snapPoints.push(c.timelineEnd)
+                }
+            })
+
+            let finalStart = rawNewStart
+
+            // If currently snapped, check if we should break out
+            if (currentSnapPoint !== null) {
+                const currentEdgePos = snapEdge === 'start' ? rawNewStart : rawNewEnd
+                const distanceFromSnap = Math.abs(currentEdgePos - currentSnapPoint)
+
+                if (distanceFromSnap > breakoutThresholdTime) {
+                    // Break free!
+                    currentSnapPoint = null
+                    snapEdge = null
+                    finalStart = rawNewStart
+                } else {
+                    // Stay snapped - keep the snapped position
+                    if (snapEdge === 'start') {
+                        finalStart = currentSnapPoint
+                    } else {
+                        finalStart = currentSnapPoint - duration
+                    }
+                }
+            }
+
+            // If not snapped, check if we should snap
+            if (currentSnapPoint === null) {
+                let bestSnapDiff: number | null = null
+                let bestSnapPoint: number | null = null
+                let bestEdge: 'start' | 'end' | null = null
+
+                // Check snap for Start edge
+                for (const point of snapPoints) {
+                    const diff = point - rawNewStart
+                    if (Math.abs(diff) < snapThresholdTime &&
+                        (bestSnapDiff === null || Math.abs(diff) < Math.abs(bestSnapDiff))) {
+                        bestSnapDiff = diff
+                        bestSnapPoint = point
+                        bestEdge = 'start'
+                    }
+                }
+
+                // Check snap for End edge
+                for (const point of snapPoints) {
+                    const diff = point - rawNewEnd
+                    if (Math.abs(diff) < snapThresholdTime &&
+                        (bestSnapDiff === null || Math.abs(diff) < Math.abs(bestSnapDiff))) {
+                        bestSnapDiff = diff
+                        bestSnapPoint = point
+                        bestEdge = 'end'
+                    }
+                }
+
+                if (bestSnapPoint !== null && bestSnapDiff !== null) {
+                    currentSnapPoint = bestSnapPoint
+                    snapEdge = bestEdge
+                    finalStart = rawNewStart + bestSnapDiff
+                }
+            }
+
+            moveClip(clip.id, finalStart)
         }
 
         const handleMouseUp = () => {
@@ -84,6 +166,10 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
 
         setIsTrimming(edge)
         selectClip(clip.id)
+
+        // Snapping state with hysteresis
+        let currentSnapPoint: number | null = null
+
         dragStartRef.current = {
             x: e.clientX,
             originalStart: clip.timelineStart,
@@ -96,17 +182,82 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
             const deltaX = moveEvent.clientX - dragStartRef.current.x
             const deltaTime = deltaX / zoom
 
+            // Thresholds
+            const snapThresholdTime = 10 / zoom
+            const breakoutThresholdTime = 18 / zoom
+
+            // Find all snap candidates
+            const allClips = useEditorStore.getState().clips
+            const snapPoints = [0]
+
+            allClips.forEach(c => {
+                if (c.track === clip.track && c.id !== clip.id) {
+                    snapPoints.push(c.timelineStart)
+                    snapPoints.push(c.timelineEnd)
+                }
+            })
+
             if (edge === 'start') {
-                const newStart = Math.max(0, dragStartRef.current.originalStart + deltaTime)
+                const rawNewStart = Math.max(0, dragStartRef.current.originalStart + deltaTime)
+                let finalStart = rawNewStart
+
+                // Check if we should break out
+                if (currentSnapPoint !== null) {
+                    const distanceFromSnap = Math.abs(rawNewStart - currentSnapPoint)
+                    if (distanceFromSnap > breakoutThresholdTime) {
+                        currentSnapPoint = null
+                        finalStart = rawNewStart
+                    } else {
+                        finalStart = currentSnapPoint
+                    }
+                }
+
+                // If not snapped, check if we should snap
+                if (currentSnapPoint === null) {
+                    for (const point of snapPoints) {
+                        const diff = point - rawNewStart
+                        if (Math.abs(diff) < snapThresholdTime) {
+                            currentSnapPoint = point
+                            finalStart = point
+                            break
+                        }
+                    }
+                }
+
                 // Don't allow start to go past end
-                if ((dragStartRef.current.originalEnd - newStart) * zoom >= minWidth) {
-                    trimClip(clip.id, 'start', newStart)
+                if ((dragStartRef.current.originalEnd - finalStart) * zoom >= minWidth) {
+                    trimClip(clip.id, 'start', finalStart)
                 }
             } else {
-                const newEnd = dragStartRef.current.originalEnd + deltaTime
+                const rawNewEnd = dragStartRef.current.originalEnd + deltaTime
+                let finalEnd = rawNewEnd
+
+                // Check if we should break out
+                if (currentSnapPoint !== null) {
+                    const distanceFromSnap = Math.abs(rawNewEnd - currentSnapPoint)
+                    if (distanceFromSnap > breakoutThresholdTime) {
+                        currentSnapPoint = null
+                        finalEnd = rawNewEnd
+                    } else {
+                        finalEnd = currentSnapPoint
+                    }
+                }
+
+                // If not snapped, check if we should snap
+                if (currentSnapPoint === null) {
+                    for (const point of snapPoints) {
+                        const diff = point - rawNewEnd
+                        if (Math.abs(diff) < snapThresholdTime) {
+                            currentSnapPoint = point
+                            finalEnd = point
+                            break
+                        }
+                    }
+                }
+
                 // Don't allow end to go before start
-                if ((newEnd - clip.timelineStart) * zoom >= minWidth) {
-                    trimClip(clip.id, 'end', newEnd)
+                if ((finalEnd - clip.timelineStart) * zoom >= minWidth) {
+                    trimClip(clip.id, 'end', finalEnd)
                 }
             }
         }
@@ -159,12 +310,22 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
             onMouseDown={handleDragStart}
         >
             {/* Clip content */}
-            <div className="h-full px-2 py-1 flex flex-col justify-center overflow-hidden">
-                <span className="text-[11px] font-medium text-white truncate drop-shadow-sm">
+            <div className="h-full px-2 py-1 flex flex-col justify-center overflow-hidden relative">
+                {/* Waveform background for audio clips */}
+                {clip.type === 'audio' && width > 40 && (
+                    <div className="absolute inset-0 flex items-center justify-center opacity-60">
+                        <AudioWaveform
+                            audioUrl={(clip as AudioClip).source}
+                            width={Math.max(width - 8, 30)}
+                            height={32}
+                        />
+                    </div>
+                )}
+                <span className="text-[11px] font-medium text-white truncate drop-shadow-sm z-10">
                     {getClipLabel()}
                 </span>
                 {clip.type === 'video' && width > 60 && (
-                    <span className="text-[9px] text-white/70 truncate">
+                    <span className="text-[9px] text-white/70 truncate z-10">
                         {formatDuration(clip.timelineEnd - clip.timelineStart)}
                     </span>
                 )}

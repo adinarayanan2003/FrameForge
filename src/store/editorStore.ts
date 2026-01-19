@@ -50,6 +50,7 @@ const initialState: EditorState = {
         height: 1080,
     },
     isDirty: false,
+    clipboard: null as Clip | null,
 }
 
 // ============================================================================
@@ -73,6 +74,8 @@ interface EditorStore extends EditorState {
     moveClip: (id: string, timelineStart: number) => void
     trimClip: (id: string, edge: 'start' | 'end', newValue: number) => void
     splitClipAtPlayhead: (id: string) => void
+    copyClip: (id: string) => void
+    pasteClip: () => void
 
     // Playback actions
     setPlayheadPosition: (position: number) => void
@@ -491,6 +494,36 @@ export const useEditorStore = create<EditorStore>()(
 
                 // Add new clip
                 state.clips.push(newClip)
+                state.isDirty = true
+            })
+        },
+
+        copyClip: (id) => {
+            const clip = get().clips.find((c) => c.id === id)
+            if (clip) {
+                set((state) => {
+                    // Deep clone the clip for clipboard
+                    state.clipboard = JSON.parse(JSON.stringify(clip))
+                })
+            }
+        },
+
+        pasteClip: () => {
+            const { clipboard, playheadPosition } = get()
+            if (!clipboard) return
+
+            get().saveToHistory()
+            set((state) => {
+                // Create a new clip from clipboard
+                const duration = clipboard.timelineEnd - clipboard.timelineStart
+                const newClip: Clip = {
+                    ...JSON.parse(JSON.stringify(clipboard)),
+                    id: `${clipboard.id}-copy-${Date.now()}`,
+                    timelineStart: playheadPosition,
+                    timelineEnd: playheadPosition + duration,
+                }
+                state.clips.push(newClip)
+                state.selectedClipId = newClip.id
                 state.isDirty = true
             })
         },

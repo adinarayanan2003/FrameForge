@@ -14,6 +14,8 @@ import { EditorToolbar } from './Toolbar'
 import { VideoPreview } from './Preview'
 import { Timeline } from './Timeline'
 import { PropertiesPanel } from './Panels/PropertiesPanel'
+import { Toast, useToast } from './UI/Toast'
+import { KeyboardShortcutsModal } from './UI/KeyboardShortcutsModal'
 
 // ============================================================================
 // TYPES
@@ -59,6 +61,9 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
     const [isSaving, setIsSaving] = useState(false)
     const [isExporting, setIsExporting] = useState(false)
     const [error, setError] = useState<string | null>(null)
+
+    // Toast notifications
+    const { toast, showToast, hideToast } = useToast()
 
     // Initialize editor state from props
     useEffect(() => {
@@ -128,30 +133,73 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
         onClose?.()
     }, [isDirty, onClose])
 
-    // Keyboard shortcuts for undo/redo
+    // Keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.target as HTMLElement).tagName === 'INPUT' ||
                 (e.target as HTMLElement).tagName === 'TEXTAREA') return
 
-            if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+            // Undo: Cmd+Z
+            if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
                 e.preventDefault()
-                if (e.shiftKey) {
-                    useEditorStore.getState().redo()
-                } else {
+                const canUndo = useEditorStore.getState().history.past.length > 0
+                if (canUndo) {
                     useEditorStore.getState().undo()
+                    showToast('Action undone', 'undo')
                 }
             }
 
+            // Redo: Cmd+Shift+Z
+            if ((e.metaKey || e.ctrlKey) && e.key === 'z' && e.shiftKey) {
+                e.preventDefault()
+                const canRedo = useEditorStore.getState().history.future.length > 0
+                if (canRedo) {
+                    useEditorStore.getState().redo()
+                    showToast('Action redone', 'redo')
+                }
+            }
+
+            // Save: Cmd+S
             if ((e.metaKey || e.ctrlKey) && e.key === 's') {
                 e.preventDefault()
                 handleSave()
+            }
+
+            // Copy: Cmd+C
+            if ((e.metaKey || e.ctrlKey) && e.key === 'c') {
+                const selectedId = useEditorStore.getState().selectedClipId
+                if (selectedId) {
+                    e.preventDefault()
+                    useEditorStore.getState().copyClip(selectedId)
+                    showToast('Clip copied', 'copy')
+                }
+            }
+
+            // Cut: Cmd+X
+            if ((e.metaKey || e.ctrlKey) && e.key === 'x') {
+                const selectedId = useEditorStore.getState().selectedClipId
+                if (selectedId) {
+                    e.preventDefault()
+                    useEditorStore.getState().copyClip(selectedId)
+                    useEditorStore.getState().deleteClip(selectedId)
+                    showToast('Clip cut', 'delete')
+                }
+            }
+
+            // Paste: Cmd+V
+            if ((e.metaKey || e.ctrlKey) && e.key === 'v') {
+                const clipboard = useEditorStore.getState().clipboard
+                if (clipboard) {
+                    e.preventDefault()
+                    useEditorStore.getState().pasteClip()
+                    showToast('Clip pasted', 'paste')
+                }
             }
         }
 
         window.addEventListener('keydown', handleKeyDown)
         return () => window.removeEventListener('keydown', handleKeyDown)
-    }, [handleSave])
+    }, [handleSave, showToast])
 
     return (
         <div className={`flex flex-col h-full bg-background ${className}`}>
@@ -194,6 +242,17 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
                     </div>
                 </div>
             )}
+
+            {/* Toast notifications */}
+            <Toast
+                message={toast.message}
+                type={toast.type}
+                visible={toast.visible}
+                onHide={hideToast}
+            />
+
+            {/* Keyboard shortcuts modal */}
+            <KeyboardShortcutsModal />
         </div>
     )
 }
