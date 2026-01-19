@@ -128,7 +128,11 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
             case 'video':
                 return `Shot ${(clip as VideoClip).shotId.split('-').pop()}`
             case 'audio':
-                return (clip as AudioClip).muted ? '🔇 Audio' : '🔊 Audio'
+                const audioClip = clip as AudioClip
+                if (audioClip.trackType === 'sfx') return '🔊 SFX'
+                if (audioClip.trackType === 'voiceover') return '🎙️ Voiceover'
+                if (audioClip.trackType === 'bgm') return '🎵 BGM'
+                return audioClip.muted ? '🔇 Audio' : '🔊 Audio'
             case 'subtitle':
                 const text = (clip as SubtitleClip).text
                 return text.length > 20 ? text.slice(0, 20) + '...' : text
