@@ -129,7 +129,7 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
     return (
         <div
             className={`flex flex-col bg-card/30 border-t border-border/20 ${className}`}
-            style={{ height: 320 }}
+            style={{ height: 240 }}
         >
             {/* Timeline header with zoom controls */}
             <div className="flex items-center justify-between px-4 py-2 border-b border-border/20">
