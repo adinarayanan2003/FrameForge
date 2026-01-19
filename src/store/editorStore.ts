@@ -219,16 +219,17 @@ export const useEditorStore = create<EditorStore>()(
 
             // Find the end of the timeline
             const timelineEnd = Math.max(...clips.map((c) => c.timelineEnd), 0)
+            const clipId = Date.now()
 
-            // Create a new video clip
-            const newClip: VideoClip = {
-                id: `custom-video-${Date.now()}`,
+            // Create a new video clip (muted, audio handled separately)
+            const newVideoClip: VideoClip = {
+                id: `custom-video-${clipId}`,
                 type: 'video',
                 track: 0,
                 timelineStart: timelineEnd,
                 timelineEnd: timelineEnd + duration,
                 locked: false,
-                shotId: `custom-${Date.now()}`,
+                shotId: `custom-${clipId}`,
                 sourceStart: 0,
                 sourceEnd: duration,
                 speed: 1,
@@ -238,17 +239,35 @@ export const useEditorStore = create<EditorStore>()(
                     saturation: 0,
                 },
                 volume: 1,
-                muted: false,
+                muted: true, // Audio handled by separate AudioClip
                 customVideoUrl: videoUrl,
             }
 
+            // Create a matching audio clip for the imported video
+            const newAudioClip: AudioClip = {
+                id: `custom-audio-${clipId}`,
+                type: 'audio',
+                track: 2,
+                timelineStart: timelineEnd,
+                timelineEnd: timelineEnd + duration,
+                locked: false,
+                source: videoUrl, // Use the same blob URL
+                sourceStart: 0,
+                sourceEnd: duration,
+                volume: 1,
+                fadeIn: 0,
+                fadeOut: 0,
+                muted: false,
+            }
+
             set((state) => {
-                state.clips.push(newClip)
+                state.clips.push(newVideoClip)
+                state.clips.push(newAudioClip)
                 state.isDirty = true
             })
 
-            // Return the clip ID for selection
-            return newClip.id
+            // Return the video clip ID for selection
+            return newVideoClip.id
         },
 
         updateClip: (id, updates) => {
