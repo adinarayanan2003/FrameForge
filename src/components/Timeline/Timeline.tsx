@@ -117,6 +117,13 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
             clips: subtitleClips,
             color: 'bg-yellow-500/80'
         },
+        {
+            id: 'overlays',
+            label: 'Overlays',
+            // Filter for overlay clips
+            clips: useEditorStore(state => state.clips.filter((c) => c.type === 'overlay')),
+            color: 'bg-pink-500/80'
+        },
     ]
 
     return (
