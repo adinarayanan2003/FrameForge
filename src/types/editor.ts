@@ -76,6 +76,8 @@ export interface VideoClip extends BaseClip {
     type: 'video'
     /** Source shot ID */
     shotId: string
+    /** Custom video URL (for imported clips, otherwise uses source.videoUrl) */
+    customVideoUrl?: string
     /** Trim: start offset in source (seconds) */
     sourceStart: number
     /** Trim: end offset in source (seconds) */

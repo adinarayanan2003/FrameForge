@@ -21,7 +21,8 @@ import {
     Unlock,
     X,
     Monitor,
-    Smartphone
+    Smartphone,
+    FilePlus2
 } from 'lucide-react'
 
 interface EditorToolbarProps {
@@ -47,6 +48,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         splitClipAtPlayhead,
         exportSettings,
         toggleAspectRatio,
+        addCustomVideoClip,
     } = useEditorStore()
 
     const canUndo = useEditorStore(selectCanUndo)
@@ -77,6 +79,32 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         if (selectedClipId && selectedClip?.type === 'audio') {
             updateClip(selectedClipId, { muted: !selectedClip.muted })
         }
+    }
+
+    const handleImportMedia = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        const blobUrl = URL.createObjectURL(file)
+        const video = document.createElement('video')
+        video.src = blobUrl
+
+        video.onloadedmetadata = () => {
+            const duration = video.duration
+            const width = video.videoWidth
+            const height = video.videoHeight
+            addCustomVideoClip(blobUrl, duration, width, height)
+            video.remove()
+        }
+
+        video.onerror = () => {
+            alert('Failed to load video file')
+            URL.revokeObjectURL(blobUrl)
+            video.remove()
+        }
+
+        // Reset input so same file can be selected again
+        e.target.value = ''
     }
 
     return (
@@ -161,6 +189,17 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                 )}
 
                 <div className="w-[1px] h-4 bg-border/20 mx-2" />
+
+                {/* Import Media */}
+                <label className="p-2 text-secondary hover:text-foreground hover:bg-card/50 rounded-lg transition-colors cursor-pointer" title="Import media file">
+                    <FilePlus2 size={18} />
+                    <input
+                        type="file"
+                        accept="video/*"
+                        className="hidden"
+                        onChange={handleImportMedia}
+                    />
+                </label>
 
                 {/* Aspect Ratio Toggle */}
                 <button

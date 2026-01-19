@@ -103,7 +103,7 @@ const VideoClipRenderer: React.FC<VideoClipRendererProps> = ({ clip, source, fps
         <Sequence from={startFrame} durationInFrames={durationFrames} premountFor={60}>
             <AbsoluteFill style={filterStyle}>
                 <OffthreadVideo
-                    src={source.videoUrl}
+                    src={clip.customVideoUrl || source.videoUrl}
                     startFrom={Math.max(0, Math.round(clip.sourceStart * fps))}
                     endAt={Math.max(0, Math.round(clip.sourceEnd * fps))}
                     playbackRate={clip.speed}

@@ -64,6 +64,7 @@ interface EditorStore extends EditorState {
 
     // Clip actions
     addClip: (clip: Clip) => void
+    addCustomVideoClip: (videoUrl: string, duration: number, width: number, height: number) => void
     updateClip: (id: string, updates: Partial<Clip>) => void
     deleteClip: (id: string) => void
     selectClip: (id: string | null) => void
@@ -210,6 +211,44 @@ export const useEditorStore = create<EditorStore>()(
                 state.clips.push(clip)
                 state.isDirty = true
             })
+        },
+
+        addCustomVideoClip: (videoUrl, duration, width, height) => {
+            get().saveToHistory()
+            const { clips, source } = get()
+
+            // Find the end of the timeline
+            const timelineEnd = Math.max(...clips.map((c) => c.timelineEnd), 0)
+
+            // Create a new video clip
+            const newClip: VideoClip = {
+                id: `custom-video-${Date.now()}`,
+                type: 'video',
+                track: 0,
+                timelineStart: timelineEnd,
+                timelineEnd: timelineEnd + duration,
+                locked: false,
+                shotId: `custom-${Date.now()}`,
+                sourceStart: 0,
+                sourceEnd: duration,
+                speed: 1,
+                filters: {
+                    brightness: 0,
+                    contrast: 0,
+                    saturation: 0,
+                },
+                volume: 1,
+                muted: false,
+                customVideoUrl: videoUrl,
+            }
+
+            set((state) => {
+                state.clips.push(newClip)
+                state.isDirty = true
+            })
+
+            // Return the clip ID for selection
+            return newClip.id
         },
 
         updateClip: (id, updates) => {
