@@ -117,6 +117,13 @@ function EditorPage({ video, shots }) {
 | `Cmd + Z` | Undo |
 | `Cmd + Shift + Z` | Redo |
 
+## Documentation
+
+For more detailed information on setup and planning, see the following:
+- [**System Design**](./docs/system_design.md) - How the backend integration works.
+- [**Deployment Plan**](./docs/deployment_plan.md) - Step-by-step GCS and Cloud Run setup.
+- [**Upcoming Features**](./docs/upcoming_plan.md) - Future roadmap and business value.
+
 ## Tech Stack
 
 - **React 18**
