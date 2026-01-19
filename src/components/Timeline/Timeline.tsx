@@ -108,7 +108,7 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
         {
             id: 'sfx',
             label: 'SFX',
-            clips: audioClips.filter(c => c.trackType === 'sfx' || c.trackType === 'custom'),
+            clips: audioClips.filter(c => c.trackType === 'sfx' || c.trackType === 'custom' || c.track === 3),
             color: 'bg-orange-500/80'
         },
         {

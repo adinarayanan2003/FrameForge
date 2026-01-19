@@ -51,7 +51,11 @@ export default function DemoPage() {
                 height,
                 fps: videoUrl.includes('BigBuckBunny') ? 24 : 30, // Heuristic for demo
                 aspectRatio: width > height ? '16:9' : '9:16',
-                jobId: `demo-${Date.now()}`
+                jobId: `demo-${Date.now()}`,
+                // Demo: Use same video URL for all audio tracks to test multi-track
+                voiceoverUrl: videoUrl,
+                bgmUrl: videoUrl,
+                sfxUrl: videoUrl,
             })
             setIsStarted(true)
             setIsLoading(false)
