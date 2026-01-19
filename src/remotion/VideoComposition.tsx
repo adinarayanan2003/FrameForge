@@ -169,14 +169,33 @@ const AudioClipRenderer: React.FC<AudioClipRendererProps> = ({ clip, source, mas
 
     const audioSrc = clip.source === 'original' ? source.videoUrl : clip.source
 
+    // Check if source is a video file (blob or url)
+    // For video files used as audio, we must use OffthreadVideo to get the sound
+    const isVideoSource = audioSrc.startsWith('blob:') ||
+        audioSrc.endsWith('.mp4') ||
+        audioSrc.endsWith('.mov') ||
+        clip.trackType === 'sfx' // SFX layer often uses video source
+
     return (
         <Sequence from={startFrame} durationInFrames={durationFrames} premountFor={60}>
-            <Audio
-                src={audioSrc}
-                startFrom={Math.max(0, Math.round(clip.sourceStart * fps))}
-                volume={volume}
-                pauseWhenBuffering
-            />
+            {isVideoSource ? (
+                <OffthreadVideo
+                    src={audioSrc}
+                    startFrom={Math.max(0, Math.round(clip.sourceStart * fps))}
+                    endAt={Math.max(0, Math.round(clip.sourceEnd * fps))}
+                    volume={volume}
+                    // Hide the video, we only want audio
+                    style={{ opacity: 0, width: 0, height: 0 }}
+                    pauseWhenBuffering
+                />
+            ) : (
+                <Audio
+                    src={audioSrc}
+                    startFrom={Math.max(0, Math.round(clip.sourceStart * fps))}
+                    volume={volume}
+                    pauseWhenBuffering
+                />
+            )}
         </Sequence>
     )
 }

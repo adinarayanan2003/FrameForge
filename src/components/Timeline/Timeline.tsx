@@ -35,8 +35,9 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
     const subtitleClips = useEditorStore(selectSubtitleClips)
     const duration = useEditorStore(selectTimelineDuration)
 
-    // Calculate timeline width based on duration and zoom
-    const timelineWidth = Math.max(duration * zoom + 200, 800)
+    // Calculate timeline width based on duration and zoom (plus label offset and buffer)
+    const labelOffset = 96 // w-24
+    const timelineWidth = Math.max(duration * zoom + 200 + labelOffset, 800)
 
     // Handle horizontal scroll
     const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
@@ -83,17 +84,45 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [selectedClipId])
 
-    // Track configuration
+    // Multi-track configuration (Production)
+    // Track 0: Video, Track 1: Voiceover, Track 2: BGM, Track 3: SFX, Track 4: Captions
     const tracks = [
-        { id: 'video', label: 'Video', clips: videoClips, color: 'bg-blue-500/80' },
-        { id: 'subtitles', label: 'Subtitles', clips: subtitleClips, color: 'bg-yellow-500/80' },
-        { id: 'audio', label: 'Audio', clips: audioClips, color: 'bg-green-500/80' },
+        {
+            id: 'video',
+            label: 'Video',
+            clips: videoClips,
+            color: 'bg-blue-500/80'
+        },
+        {
+            id: 'voiceover',
+            label: 'Voiceover',
+            clips: audioClips.filter(c => c.trackType === 'voiceover'),
+            color: 'bg-green-500/80'
+        },
+        {
+            id: 'bgm',
+            label: 'BGM',
+            clips: audioClips.filter(c => c.trackType === 'bgm'),
+            color: 'bg-purple-500/80'
+        },
+        {
+            id: 'sfx',
+            label: 'SFX',
+            clips: audioClips.filter(c => c.trackType === 'sfx' || c.trackType === 'custom' || c.track === 3),
+            color: 'bg-orange-500/80'
+        },
+        {
+            id: 'captions',
+            label: 'Captions',
+            clips: subtitleClips,
+            color: 'bg-yellow-500/80'
+        },
     ]
 
     return (
         <div
             className={`flex flex-col bg-card/30 border-t border-border/20 ${className}`}
-            style={{ height: 280 }}
+            style={{ height: 320 }}
         >
             {/* Timeline header with zoom controls */}
             <div className="flex items-center justify-between px-4 py-2 border-b border-border/20">
@@ -124,60 +153,47 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
             </div>
 
             {/* Timeline content */}
-            <div className="flex flex-1 overflow-hidden">
-                {/* Track labels */}
-                <div className="w-24 flex-shrink-0 border-r border-border/20">
-                    {/* Ruler spacer */}
-                    <div className="h-6 border-b border-border/20" />
-                    {/* Track labels */}
-                    {tracks.map((track) => (
-                        <div
-                            key={track.id}
-                            className="h-16 flex items-center px-3 border-b border-border/10"
-                        >
-                            <span className="text-xs text-secondary font-medium">{track.label}</span>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Scrollable timeline area */}
+            <div
+                ref={scrollContainerRef}
+                className="flex-1 overflow-x-auto overflow-y-auto scrollbar-thin"
+                onScroll={handleScroll}
+            >
                 <div
-                    ref={scrollContainerRef}
-                    className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hide"
-                    onScroll={handleScroll}
+                    ref={containerRef}
+                    className="relative"
+                    style={{ width: timelineWidth, minHeight: '100%' }}
+                    onClick={handleTimelineClick}
                 >
-                    <div
-                        ref={containerRef}
-                        className="relative"
-                        style={{ width: timelineWidth, minHeight: '100%' }}
-                        onClick={handleTimelineClick}
-                    >
-                        {/* Time ruler */}
+                    {/* Time ruler (Sticky top, Offset by label width) */}
+                    <div className="sticky top-0 z-20 bg-slate-900/95 ml-24 h-6 border-b border-border/20">
                         <TimeRuler
                             duration={duration}
                             zoom={zoom}
-                            width={timelineWidth}
+                            width={timelineWidth - 96}
                         />
+                    </div>
 
-                        {/* Tracks */}
-                        <div className="relative">
-                            {tracks.map((track, index) => (
-                                <TimelineTrack
-                                    key={track.id}
-                                    trackId={track.id}
-                                    clips={track.clips}
-                                    color={track.color}
-                                    zoom={zoom}
-                                    selectedClipId={selectedClipId}
-                                />
-                            ))}
-                        </div>
+                    {/* Tracks */}
+                    <div className="relative">
+                        {tracks.map((track) => (
+                            <TimelineTrack
+                                key={track.id}
+                                trackId={track.id}
+                                label={track.label}
+                                clips={track.clips}
+                                color={track.color}
+                                zoom={zoom}
+                                selectedClipId={selectedClipId}
+                            />
+                        ))}
+                    </div>
 
-                        {/* Playhead */}
-                        {/* No longer passing position prop, it self-subscribes */}
+                    {/* Playhead (Offset by label width) */}
+                    {/* No longer passing position prop, it self-subscribes */}
+                    <div className="absolute top-0 h-full pointer-events-none ml-24" style={{ zIndex: 30 }}>
                         <PlayheadCursor
                             zoom={zoom}
-                            height={tracks.length * 64 + 24} // tracks + ruler
+                            height={tracks.length * 48 + 24} // tracks + ruler
                         />
                     </div>
                 </div>
