@@ -49,6 +49,8 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         exportSettings,
         toggleAspectRatio,
         addCustomVideoClip,
+        addAudioClip,
+        addOverlayClip,
     } = useEditorStore()
 
     const canUndo = useEditorStore(selectCanUndo)
@@ -86,23 +88,43 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         if (!file) return
 
         const blobUrl = URL.createObjectURL(file)
-        const video = document.createElement('video')
-        video.src = blobUrl
 
-        video.onloadedmetadata = () => {
-            const duration = video.duration
-            const width = video.videoWidth
-            const height = video.videoHeight
-            addCustomVideoClip(blobUrl, duration, width, height)
-            video.remove()
+        // Handle Images
+        if (file.type.startsWith('image/')) {
+            const type = file.type.includes('svg') || file.type.includes('png') ? 'logo' : 'image'
+            addOverlayClip(blobUrl, type)
+            return
         }
 
-        video.onerror = () => {
-            alert('Failed to load video file')
-            URL.revokeObjectURL(blobUrl)
-            video.remove()
+        // Handle Audio
+        if (file.type.startsWith('audio/')) {
+            const audio = document.createElement('audio')
+            audio.src = blobUrl
+            audio.onloadedmetadata = () => {
+                addAudioClip(blobUrl, audio.duration, 'sfx') // Default to SFX
+                audio.remove()
+            }
+            return
         }
 
+        // Handle Video
+        if (file.type.startsWith('video/')) {
+            const video = document.createElement('video')
+            video.src = blobUrl
+
+            video.onloadedmetadata = () => {
+                const duration = video.duration
+                const width = video.videoWidth
+                const height = video.videoHeight
+                addCustomVideoClip(blobUrl, duration, width, height)
+                video.remove()
+            }
+
+            video.onerror = () => {
+                console.error('Failed to load video metadata')
+                video.remove()
+            }
+        }
         // Reset input so same file can be selected again
         e.target.value = ''
     }
@@ -195,7 +217,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                     <FilePlus2 size={18} />
                     <input
                         type="file"
-                        accept="video/*"
+                        accept="video/*, audio/*, image/*"
                         className="hidden"
                         onChange={handleImportMedia}
                     />

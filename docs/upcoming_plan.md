@@ -6,9 +6,10 @@ This document outlines the high-priority features identified for the next phases
 *Focus: Turning the editor into a business-ready tool.*
 
 ### 1. Brand Overlays (Logo/CTA)
+- **Status**: ✅ Infrastructure Ready (Track 5 Implemented)
 - **Value**: High (Essential for marketing content)
 - **Complexity**: Low
-- **Description**: Allow users to upload a brand logo and add a "Call to Action" button or text overlay at the end of the video.
+- **Description**: Allow users to upload a brand logo and add a "Call to Action" button or text overlay at the end of the video. (Infrastructure delivered via new Overlays track and Image Import).
 
 ### 2. AI Auto-Ducking
 - **Value**: High (Instant audio quality)

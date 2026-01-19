@@ -136,6 +136,9 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
             case 'subtitle':
                 const text = (clip as SubtitleClip).text
                 return text.length > 20 ? text.slice(0, 20) + '...' : text
+            case 'overlay':
+                const overlay = clip as any // Cast as any to avoid import cycle if needed, or proper type
+                return overlay.overlayType === 'text' ? '🔤 Text' : '🖼️ Image'
             default:
                 return 'Clip'
         }

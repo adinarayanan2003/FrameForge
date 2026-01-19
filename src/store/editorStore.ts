@@ -65,6 +65,8 @@ interface EditorStore extends EditorState {
     // Clip actions
     addClip: (clip: Clip) => void
     addCustomVideoClip: (videoUrl: string, duration: number, width: number, height: number) => void
+    addAudioClip: (audioUrl: string, duration: number, trackType: 'voiceover' | 'bgm' | 'sfx') => void
+    addOverlayClip: (imageUrl: string, type: 'image' | 'logo') => void
     updateClip: (id: string, updates: Partial<Clip>) => void
     deleteClip: (id: string) => void
     selectClip: (id: string | null) => void
@@ -314,6 +316,68 @@ export const useEditorStore = create<EditorStore>()(
 
             // Return the video clip ID for selection
             return newVideoClip.id
+        },
+
+        addAudioClip: (audioUrl, duration, trackType) => {
+            get().saveToHistory()
+
+            const state = get()
+            const clipId = `imported-audio-${Date.now()}`
+            const timelineEnd = Math.max(...state.clips.map((c) => c.timelineEnd), 0)
+
+            // Determine track based on type
+            let track = 3 // Default SFX
+            if (trackType === 'voiceover') track = 1
+            if (trackType === 'bgm') track = 2
+
+            const newClip: AudioClip = {
+                id: clipId,
+                type: 'audio',
+                track,
+                trackType,
+                timelineStart: timelineEnd,
+                timelineEnd: timelineEnd + duration,
+                locked: false,
+                source: audioUrl,
+                sourceStart: 0,
+                sourceEnd: duration,
+                volume: 1,
+                fadeIn: 0,
+                fadeOut: 0,
+                muted: false,
+            }
+
+            set((state) => {
+                state.clips.push(newClip)
+                state.isDirty = true
+            })
+        },
+
+        addOverlayClip: (imageUrl, type) => {
+            get().saveToHistory()
+
+            const state = get()
+            const clipId = `imported-overlay-${Date.now()}`
+            const timelineEnd = Math.max(...state.clips.map((c) => c.timelineEnd), 0)
+            const duration = 5 // Default 5s for images
+
+            const newClip: any = { // fast-track type casting to avoid circular dependency issues if any
+                id: clipId,
+                type: 'overlay',
+                track: 5, // Custom Overlays track
+                timelineStart: timelineEnd,
+                timelineEnd: timelineEnd + duration,
+                locked: false,
+                overlayType: type,
+                content: imageUrl,
+                opacity: 1,
+                position: { x: 0.25, y: 0.25, width: 0.5, height: 0.5, rotation: 0 } // Centered default
+            }
+
+            set((state) => {
+                state.clips.push(newClip)
+                state.isDirty = true
+            })
         },
 
         updateClip: (id, updates) => {

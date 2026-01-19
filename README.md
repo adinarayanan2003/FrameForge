@@ -23,6 +23,7 @@ Everything transforms into a lightweight JSON object called the `EditManifest`. 
 **How**: 
 - The React components (`VideoComposition`) read the JSON Manifest.
 - They render HTML/CSS on top of a `<video>` tag.
+- **Hybrid Audio**: Uses standard `<Audio>` for files and `<OffthreadVideo>` for complex video-based audio to ensure compatibility.
 - **Result**: Instant playback. No "rendering" or encoding happens here. It's just a web page updating in real-time.
 
 ### 3. Server-Side: The Render (High Quality)
@@ -46,8 +47,16 @@ graph TD
 ## Features
 
 ### Core Editing
-- **Timeline View**: Multi-track timeline with video, audio, and subtitle tracks
-- **Clip Trimming**: Drag edges to trim clips with frame-accurate precision
+### Core Editing
+- **Multi-Track Timeline**: 6 dedicated lanes for professional compositing:
+  1. **Video** (Visuals)
+  2. **Voiceover** (AI Narration)
+  3. **BGM** (Background Music)
+  4. **SFX** (Sound Effects)
+  5. **Captions** (Subtitles)
+  6. **Overlays** (Images/Logos)
+- **Universal Import**: Import Video (`.mp4`, `.mov`), Audio (`.mp3`, `.wav`), and Images (`.png`, `.jpg`, `.svg`) with automatic track routing.
+- **Clip Trimming**: Drag edges to trim clips with frame-accurate precision.
 - **Split & Delete**: Split clips at playhead (S key), delete unwanted sections
 - **Reordering**: Drag & drop to reorder clips (logic implemented, UI pending)
 

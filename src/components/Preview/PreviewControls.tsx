@@ -39,7 +39,7 @@ const ProgressBar: React.FC = () => {
 
     return (
         <div
-            className="h-1 bg-card/50 rounded-full mb-3 cursor-pointer group"
+            className="h-1 bg-card/50 rounded-full mb-1 cursor-pointer group"
             onClick={handleProgressClick}
         >
             <div
@@ -120,7 +120,7 @@ export const PreviewControls: React.FC = () => {
     }, []) // Empty dependency array - handlers use getState()
 
     return (
-        <div className="px-4 py-3 bg-card/30 border-t border-border/20">
+        <div className="px-3 py-1 bg-card/30 border-t border-border/20">
             {/* Progress bar */}
             <ProgressBar />
 
@@ -135,42 +135,42 @@ export const PreviewControls: React.FC = () => {
                 <div className="flex items-center gap-1">
                     <button
                         onClick={seekToStart}
-                        className="p-2 text-secondary hover:text-foreground transition-colors"
+                        className="p-1 text-secondary hover:text-foreground transition-colors"
                         title="Jump to start (Home)"
                     >
-                        <SkipBack size={18} />
+                        <SkipBack size={16} />
                     </button>
 
                     <button
                         onClick={stepBackward}
-                        className="p-2 text-secondary hover:text-foreground transition-colors"
+                        className="p-1 text-secondary hover:text-foreground transition-colors"
                         title="Previous frame (←)"
                     >
-                        <ChevronLeft size={18} />
+                        <ChevronLeft size={16} />
                     </button>
 
                     <button
                         onClick={togglePlayback}
-                        className="p-3 bg-primary text-primary-foreground rounded-full hover:opacity-90 transition-opacity"
+                        className="p-1.5 bg-primary text-primary-foreground rounded-full hover:opacity-90 transition-opacity"
                         title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
                     >
-                        {isPlaying ? <Pause size={20} /> : <Play size={20} className="ml-0.5" />}
+                        {isPlaying ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
                     </button>
 
                     <button
                         onClick={stepForward}
-                        className="p-2 text-secondary hover:text-foreground transition-colors"
+                        className="p-1 text-secondary hover:text-foreground transition-colors"
                         title="Next frame (→)"
                     >
-                        <ChevronRight size={18} />
+                        <ChevronRight size={16} />
                     </button>
 
                     <button
                         onClick={seekToEnd}
-                        className="p-2 text-secondary hover:text-foreground transition-colors"
+                        className="p-1 text-secondary hover:text-foreground transition-colors"
                         title="Jump to end (End)"
                     >
-                        <SkipForward size={18} />
+                        <SkipForward size={16} />
                     </button>
                 </div>
 

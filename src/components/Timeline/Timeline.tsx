@@ -117,12 +117,19 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
             clips: subtitleClips,
             color: 'bg-yellow-500/80'
         },
+        {
+            id: 'overlays',
+            label: 'Overlays',
+            // Filter for overlay clips
+            clips: useEditorStore(state => state.clips.filter((c) => c.type === 'overlay')),
+            color: 'bg-pink-500/80'
+        },
     ]
 
     return (
         <div
             className={`flex flex-col bg-card/30 border-t border-border/20 ${className}`}
-            style={{ height: 320 }}
+            style={{ height: 240 }}
         >
             {/* Timeline header with zoom controls */}
             <div className="flex items-center justify-between px-4 py-2 border-b border-border/20">
