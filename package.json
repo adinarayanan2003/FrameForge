@@ -3,9 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "description": "Timeline-based video editor module for Owly Studio",
-  "main": "dist/index.js",
-  "module": "dist/index.esm.js",
-  "types": "dist/index.d.ts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types/editor.ts"
+  },
   "scripts": {
     "dev": "next dev --port 3001",
     "build": "next build",
