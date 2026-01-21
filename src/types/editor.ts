@@ -48,6 +48,8 @@ export interface SourceShot {
     duration: number
     /** First frame thumbnail URL */
     thumbnailUrl?: string
+    /** Optional: Split video file for this specific shot (performance optimization) */
+    videoUrl?: string
 }
 
 export interface SourceAudio {
@@ -259,6 +261,12 @@ export interface EditManifest {
         quality: 'draft' | 'standard' | 'high'
         /** Include audio */
         includeAudio: boolean
+        /** Aspect ratio */
+        aspectRatio: '16:9' | '9:16'
+        /** Width */
+        width: number
+        /** Height */
+        height: number
     }
 }
 
@@ -308,6 +316,8 @@ export interface EditorState {
     isDirty: boolean
     /** Clipboard for copy/paste */
     clipboard: Clip | null
+    /** Whether to show safe zone overlays */
+    showSafeZones: boolean
 }
 
 // ============================================================================

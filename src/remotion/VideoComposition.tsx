@@ -16,7 +16,10 @@ import {
     OffthreadVideo,
     useCurrentFrame,
 } from 'remotion'
-import { EditManifest, VideoClip, AudioClip, SubtitleClip, OverlayClip, Clip } from '@/types/editor'
+import { EditManifest, VideoClip, AudioClip, SubtitleClip, OverlayClip, Clip } from '../types/editor'
+
+// Fonts are now loaded lazily based on usage within the manifest
+// avoiding keeping this at module level prevents unnecessary network requests
 
 interface VideoCompositionProps {
     manifest: EditManifest
@@ -216,30 +219,34 @@ const SubtitleRenderer: React.FC<SubtitleRendererProps> = ({ clip }) => {
 
     return (
         <Sequence from={startFrame} durationInFrames={durationFrames}>
-            <AbsoluteFill
-                style={{
-                    display: 'flex',
-                    alignItems: style.verticalPosition < 0.5 ? 'flex-start' : 'flex-end',
-                    justifyContent: 'center',
-                    padding: '20px 40px',
-                }}
-            >
+            <AbsoluteFill>
                 <div
                     style={{
-                        fontFamily: style.fontFamily,
-                        fontSize: style.fontSize,
-                        color: style.color,
-                        backgroundColor: style.backgroundColor,
-                        padding: '8px 16px',
-                        borderRadius: 4,
-                        textAlign: style.textAlign,
-                        fontWeight: style.bold ? 'bold' : 'normal',
-                        fontStyle: style.italic ? 'italic' : 'normal',
-                        textShadow: style.shadow ? '2px 2px 4px rgba(0,0,0,0.5)' : 'none',
-                        maxWidth: '80%',
+                        position: 'absolute',
+                        top: `${clip.style.verticalPosition * 100}%`,
+                        left: '50%',
+                        transform: `translate(-50%, -${clip.style.verticalPosition * 100}%)`,
+                        width: '80%',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        textAlign: clip.style.textAlign,
                     }}
                 >
-                    {clip.text}
+                    <div
+                        style={{
+                            fontFamily: clip.style.fontFamily,
+                            fontSize: clip.style.fontSize,
+                            color: clip.style.color,
+                            backgroundColor: clip.style.backgroundColor,
+                            padding: '8px 16px',
+                            borderRadius: 4,
+                            fontWeight: clip.style.bold ? 'bold' : 'normal',
+                            fontStyle: clip.style.italic ? 'italic' : 'normal',
+                            textShadow: clip.style.shadow ? '2px 2px 4px rgba(0,0,0,0.5)' : 'none',
+                        }}
+                    >
+                        {clip.text}
+                    </div>
                 </div>
             </AbsoluteFill>
         </Sequence>
