@@ -118,6 +118,14 @@ const VideoClipRenderer: React.FC<VideoClipRendererProps> = ({ clip, source, fps
                     volume={clip.volume}
                     muted={clip.muted}
                     pauseWhenBuffering
+                    onError={(e) => {
+                        console.error(`❌ [Render Error] Video failed to load for clip ${clip.id}`);
+                        console.error(`❌ [Render Error] URL: ${clip.customVideoUrl || source.videoUrl}`);
+                        // console.error(JSON.stringify(e));
+                    }}
+                    onLoadStart={() => {
+                        console.log(`🎬 [Render] Loading video for clip ${clip.id}: ${clip.customVideoUrl || source.videoUrl}`);
+                    }}
                 />
             </AbsoluteFill>
         </Sequence>
