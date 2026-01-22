@@ -7,7 +7,12 @@ export const RemotionRoot: React.FC = () => {
         <Composition
             id="OwlyVideoComposition"
             component={VideoComposition as any}
-            durationInFrames={300} // Default, will be overridden by props
+            calculateMetadata={async ({ props }) => {
+                const duration = Math.ceil(props.manifest.timeline.duration * props.manifest.timeline.fps);
+                return {
+                    durationInFrames: duration || 300 // Fallback to 300 if 0
+                };
+            }}
             fps={30}
             width={1920}
             height={1080}
