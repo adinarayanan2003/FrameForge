@@ -123,9 +123,6 @@ const VideoClipRenderer: React.FC<VideoClipRendererProps> = ({ clip, source, fps
                         console.error(`❌ [Render Error] URL: ${clip.customVideoUrl || source.videoUrl}`);
                         // console.error(JSON.stringify(e));
                     }}
-                    onLoadStart={() => {
-                        console.log(`🎬 [Render] Loading video for clip ${clip.id}: ${clip.customVideoUrl || source.videoUrl}`);
-                    }}
                 />
             </AbsoluteFill>
         </Sequence>
@@ -182,10 +179,15 @@ const AudioClipRenderer: React.FC<AudioClipRendererProps> = ({ clip, source, mas
 
     // Check if source is a video file (blob or url)
     // For video files used as audio, we must use OffthreadVideo to get the sound
-    const isVideoSource = audioSrc.startsWith('blob:') ||
-        audioSrc.endsWith('.mp4') ||
-        audioSrc.endsWith('.mov') ||
-        clip.trackType === 'sfx' // SFX layer often uses video source
+    const audioSrcClean = audioSrc.split('?')[0].toLowerCase()
+    const isVideoExtension = audioSrcClean.endsWith('.mp4') || audioSrcClean.endsWith('.mov') || audioSrcClean.endsWith('.webm')
+    const isAudioExtension = audioSrcClean.endsWith('.mp3') || audioSrcClean.endsWith('.wav') || audioSrcClean.endsWith('.aac') || audioSrcClean.endsWith('.m4a')
+
+    const isVideoSource = (
+        audioSrc.startsWith('blob:') ||
+        isVideoExtension ||
+        (clip.trackType === 'sfx' && !isAudioExtension)
+    )
 
     return (
         <Sequence from={startFrame} durationInFrames={durationFrames} premountFor={60}>
