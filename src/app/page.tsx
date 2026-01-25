@@ -95,14 +95,129 @@ export default function DemoPage() {
 
     const handleExport = async (manifest: EditManifest) => {
         console.log('🎬 Export manifest:', manifest)
-        // In production, send to Remotion render service
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-        alert('Export complete! Check console for manifest JSON.')
+
+        try {
+            const response = await fetch('/api/render', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ manifest }),
+            })
+
+            if (!response.ok) {
+                let errorMessage = 'Failed to export video'
+                try {
+                    const errorData = await response.json()
+                    errorMessage = errorData.error || errorMessage
+                } catch (e) {
+                    // Not JSON, likely a 500 error page
+                    errorMessage = `Export failed (Status ${response.status}). The server might be restarting or crashing.`
+                }
+                throw new Error(errorMessage)
+            }
+
+            // Get the blob from response
+            const blob = await response.blob()
+            const url = window.URL.createObjectURL(blob)
+
+            // Create a temporary link and click it
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `owly-edit-${manifest.jobId}.mp4`
+            document.body.appendChild(a)
+            a.click()
+
+            // Cleanup
+            window.URL.revokeObjectURL(url)
+            document.body.removeChild(a)
+        } catch (err) {
+            console.error('Export failed:', err)
+            throw err // Re-throw so VideoEditor can catch and show error
+        }
     }
 
     const handleClose = () => {
         setIsStarted(false)
         setIsLoading(false)
+    }
+
+    const uploadFile = async (file: File): Promise<string> => {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+        })
+
+        if (!response.ok) {
+            let errorMessage = 'Upload failed'
+            try {
+                const errorData = await response.json()
+                errorMessage = errorData.error || errorMessage
+            } catch (e) {
+                errorMessage = `Upload failed (Status ${response.status}).`
+            }
+            throw new Error(errorMessage)
+        }
+
+        const data = await response.json()
+        return data.url // e.g., 'uploads/filename.mp4'
+    }
+
+    const handleFileSelect = async (file: File) => {
+        if (!file || !file.type.startsWith('video/')) return
+
+        setIsLoading(true)
+        setError(null)
+
+        try {
+            const uploadedUrl = await uploadFile(file)
+            setVideoUrl(uploadedUrl)
+
+            // Still need a blob URL for metadata extraction since the server path might not be ready in-DOM
+            const tempBlobUrl = URL.createObjectURL(file)
+            const video = document.createElement('video')
+            video.src = tempBlobUrl
+            video.crossOrigin = 'anonymous'
+
+            video.onloadedmetadata = () => {
+                const duration = video.duration
+                const width = video.videoWidth
+                const height = video.videoHeight
+
+                setMetadata({
+                    ...mockVideo,
+                    videoUrl: uploadedUrl,
+                    duration,
+                    width,
+                    height,
+                    fps: 30, // Default to 30 for uploaded files
+                    aspectRatio: width > height ? '16:9' : '9:16',
+                    jobId: `local-${Date.now()}`,
+                    voiceoverUrl: uploadedUrl,
+                    bgmUrl: uploadedUrl,
+                    sfxUrl: uploadedUrl,
+                })
+                setIsStarted(true)
+                setIsLoading(false)
+                video.remove()
+                URL.revokeObjectURL(tempBlobUrl)
+            }
+
+            video.onerror = (e) => {
+                console.error('Metadata extraction error:', e)
+                setError('Failed to extract video metadata.')
+                setIsLoading(false)
+                video.remove()
+                URL.revokeObjectURL(tempBlobUrl)
+            }
+        } catch (err) {
+            console.error('File import failed:', err)
+            setError(err instanceof Error ? err.message : 'Failed to import file')
+            setIsLoading(false)
+        }
     }
 
     if (!isStarted) {
@@ -149,10 +264,7 @@ export default function DemoPage() {
                                     e.preventDefault()
                                     e.currentTarget.classList.remove('border-indigo-500')
                                     const file = e.dataTransfer.files[0]
-                                    if (file && file.type.startsWith('video/')) {
-                                        const blobUrl = URL.createObjectURL(file)
-                                        setVideoUrl(blobUrl)
-                                    }
+                                    handleFileSelect(file)
                                 }}
                             >
                                 <input
@@ -161,10 +273,7 @@ export default function DemoPage() {
                                     className="hidden"
                                     onChange={(e) => {
                                         const file = e.target.files?.[0]
-                                        if (file) {
-                                            const blobUrl = URL.createObjectURL(file)
-                                            setVideoUrl(blobUrl)
-                                        }
+                                        if (file) handleFileSelect(file)
                                     }}
                                 />
                                 <svg className="w-8 h-8 mx-auto text-slate-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -227,6 +336,7 @@ export default function DemoPage() {
                 shots={dynamicShots}
                 onSave={handleSave}
                 onExport={handleExport}
+                onUpload={uploadFile}
                 onClose={handleClose}
                 className="h-full"
             />

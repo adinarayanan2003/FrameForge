@@ -30,6 +30,8 @@ export interface VideoEditorProps {
     onSave?: (manifest: EditManifest) => Promise<void>
     /** Called when user exports final video */
     onExport?: (manifest: EditManifest) => Promise<void>
+    /** Called when a file is imported and needs to be uploaded to server */
+    onUpload?: (file: File) => Promise<string>
     /** Called when user closes the editor */
     onClose?: () => void
     /** Additional CSS classes */
@@ -45,6 +47,7 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
     shots = [],
     onSave,
     onExport,
+    onUpload,
     onClose,
     className = '',
 }) => {
@@ -115,6 +118,7 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
 
         try {
             await onExport(manifest)
+            showToast('Video exported successfully!', 'success')
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to export')
         } finally {
@@ -208,6 +212,7 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
                 onSave={onSave ? handleSave : undefined}
                 onExport={onExport ? handleExport : undefined}
                 onClose={onClose ? handleClose : undefined}
+                onUpload={onUpload}
                 isSaving={isSaving}
             />
 

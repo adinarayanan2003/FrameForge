@@ -16,6 +16,8 @@ const nextConfig = {
     },
     // Transpile Remotion packages
     transpilePackages: ['remotion', '@remotion/player'],
+    // Ensure renderer and bundler remain on the server
+    serverExternalPackages: ['@remotion/renderer', '@remotion/bundler'],
 }
 
 export default nextConfig

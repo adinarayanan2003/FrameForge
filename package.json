@@ -17,15 +17,17 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@remotion/cli": "^4.0.0",
-    "@remotion/player": "^4.0.0",
+    "@remotion/bundler": "4.0.409",
+    "@remotion/cli": "4.0.409",
+    "@remotion/player": "4.0.409",
+    "@remotion/renderer": "4.0.409",
     "date-fns": "^4.1.0",
     "immer": "^10.0.0",
     "lucide-react": "^0.554.0",
     "next": "^16.1.3",
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0",
-    "remotion": "^4.0.0",
+    "remotion": "4.0.409",
     "zustand": "^4.5.0"
   },
   "devDependencies": {

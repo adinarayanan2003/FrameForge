@@ -51,6 +51,7 @@ const initialState: EditorState = {
     },
     isDirty: false,
     clipboard: null as Clip | null,
+    showSafeZones: false,
 }
 
 // ============================================================================
@@ -65,9 +66,9 @@ interface EditorStore extends EditorState {
 
     // Clip actions
     addClip: (clip: Clip) => void
-    addCustomVideoClip: (videoUrl: string, duration: number, width: number, height: number) => void
-    addAudioClip: (audioUrl: string, duration: number, trackType: 'voiceover' | 'bgm' | 'sfx') => void
-    addOverlayClip: (imageUrl: string, type: 'image' | 'logo') => void
+    addCustomVideoClip: (videoUrl: string, duration: number, width: number, height: number) => string
+    addAudioClip: (audioUrl: string, duration: number, trackType: AudioClip['trackType']) => string
+    addOverlayClip: (imageUrl: string, type: 'image' | 'logo') => string
     updateClip: (id: string, updates: Partial<Clip>) => void
     deleteClip: (id: string) => void
     selectClip: (id: string | null) => void
@@ -354,6 +355,8 @@ export const useEditorStore = create<EditorStore>()(
                 state.clips.push(newClip)
                 state.isDirty = true
             })
+
+            return clipId
         },
 
         addOverlayClip: (imageUrl, type) => {
@@ -381,6 +384,8 @@ export const useEditorStore = create<EditorStore>()(
                 state.clips.push(newClip)
                 state.isDirty = true
             })
+
+            return clipId
         },
 
         updateClip: (id, updates) => {
