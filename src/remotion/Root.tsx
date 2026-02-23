@@ -9,8 +9,12 @@ export const RemotionRoot: React.FC = () => {
             component={VideoComposition as any}
             calculateMetadata={async ({ props }) => {
                 const duration = Math.ceil(props.manifest.timeline.duration * props.manifest.timeline.fps);
+                const width = props.manifest.timeline.width || 1920;
+                const height = props.manifest.timeline.height || 1080;
                 return {
-                    durationInFrames: duration || 300 // Fallback to 300 if 0
+                    durationInFrames: duration || 300, // Fallback to 300 if 0
+                    width,
+                    height,
                 };
             }}
             fps={30}
