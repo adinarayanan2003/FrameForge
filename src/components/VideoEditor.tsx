@@ -7,7 +7,7 @@
 
 'use client'
 
-import React, { useEffect, useCallback, useState } from 'react'
+import React, { useEffect, useCallback, useRef, useState } from 'react'
 import { useEditorStore } from '@/store/editorStore'
 import { SourceVideo, SourceShot, EditManifest } from '@/types/editor'
 import { EditorToolbar } from './Toolbar'
@@ -16,6 +16,7 @@ import { Timeline } from './Timeline'
 import { PropertiesPanel } from './Panels/PropertiesPanel'
 import { Toast, useToast } from './UI/Toast'
 import { KeyboardShortcutsModal } from './UI/KeyboardShortcutsModal'
+import { AgentChatWindow } from './Agent'
 
 // ============================================================================
 // TYPES
@@ -30,6 +31,8 @@ export interface VideoEditorProps {
     onSave?: (manifest: EditManifest) => Promise<void>
     /** Called when user exports final video */
     onExport?: (manifest: EditManifest) => Promise<void>
+    /** Called when a file is imported and needs to be uploaded to server */
+    onUpload?: (file: File) => Promise<string>
     /** Called when user closes the editor */
     onClose?: () => void
     /** Additional CSS classes */
@@ -45,6 +48,7 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
     shots = [],
     onSave,
     onExport,
+    onUpload,
     onClose,
     className = '',
 }) => {
@@ -61,6 +65,10 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
     const [isSaving, setIsSaving] = useState(false)
     const [isExporting, setIsExporting] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [isAgentOpen, setIsAgentOpen] = useState(false)
+    const [agentPanelHeight, setAgentPanelHeight] = useState(300)
+    const [isResizingAgentPanel, setIsResizingAgentPanel] = useState(false)
+    const rightRailRef = useRef<HTMLDivElement>(null)
 
     // Toast notifications
     const { toast, showToast, hideToast } = useToast()
@@ -115,12 +123,13 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
 
         try {
             await onExport(manifest)
+            showToast('Video exported successfully!', 'success')
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to export')
         } finally {
             setIsExporting(false)
         }
-    }, [onExport, generateManifest])
+    }, [onExport, generateManifest, showToast])
 
     // Handle close with unsaved changes warning
     const handleClose = useCallback(() => {
@@ -132,6 +141,36 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
         }
         onClose?.()
     }, [isDirty, onClose])
+
+    useEffect(() => {
+        if (!isResizingAgentPanel) return
+
+        const handleMouseMove = (event: MouseEvent) => {
+            if (!rightRailRef.current) return
+
+            const bounds = rightRailRef.current.getBoundingClientRect()
+            const minPanelHeight = 180
+            const maxPanelHeight = Math.max(minPanelHeight, bounds.height - 180)
+            const nextHeight = bounds.bottom - event.clientY
+            setAgentPanelHeight(Math.max(minPanelHeight, Math.min(maxPanelHeight, nextHeight)))
+        }
+
+        const handleMouseUp = () => {
+            setIsResizingAgentPanel(false)
+        }
+
+        document.body.style.cursor = 'row-resize'
+        document.body.style.userSelect = 'none'
+        window.addEventListener('mousemove', handleMouseMove)
+        window.addEventListener('mouseup', handleMouseUp)
+
+        return () => {
+            document.body.style.cursor = ''
+            document.body.style.userSelect = ''
+            window.removeEventListener('mousemove', handleMouseMove)
+            window.removeEventListener('mouseup', handleMouseUp)
+        }
+    }, [isResizingAgentPanel])
 
     // Keyboard shortcuts
     useEffect(() => {
@@ -208,7 +247,10 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
                 onSave={onSave ? handleSave : undefined}
                 onExport={onExport ? handleExport : undefined}
                 onClose={onClose ? handleClose : undefined}
+                onUpload={onUpload}
                 isSaving={isSaving}
+                onToggleAgent={() => setIsAgentOpen((value) => !value)}
+                isAgentOpen={isAgentOpen}
             />
 
             {/* Error message */}
@@ -225,8 +267,37 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
                     <VideoPreview className="flex-1 min-h-0" />
                 </div>
 
-                {/* Properties panel */}
-                <PropertiesPanel className="w-80 border-l border-border/20" />
+                {/* Properties panel and agent */}
+                <div ref={rightRailRef} className="w-80 shrink-0 border-l border-border/20 bg-card/20 flex flex-col min-h-0">
+                    <PropertiesPanel className="min-h-0 flex-1" />
+
+                    {isAgentOpen && (
+                        <button
+                            type="button"
+                            aria-label="Resize agent panel"
+                            onMouseDown={(event) => {
+                                event.preventDefault()
+                                setIsResizingAgentPanel(true)
+                            }}
+                            className={`h-2 shrink-0 border-y border-border/20 bg-card/40 hover:bg-card/70 cursor-row-resize ${
+                                isResizingAgentPanel ? 'bg-card/70' : ''
+                            }`}
+                        >
+                            <span className="block h-px w-8 mx-auto bg-border/70" />
+                        </button>
+                    )}
+
+                    <div
+                        className="shrink-0 overflow-hidden border-t border-border/20 transition-[height,opacity] duration-200"
+                        style={{
+                            height: isAgentOpen ? agentPanelHeight : 0,
+                            opacity: isAgentOpen ? 1 : 0,
+                            pointerEvents: isAgentOpen ? 'auto' : 'none',
+                        }}
+                    >
+                        <AgentChatWindow isOpen={isAgentOpen} onClose={() => setIsAgentOpen(false)} />
+                    </div>
+                </div>
             </div>
 
             {/* Timeline */}

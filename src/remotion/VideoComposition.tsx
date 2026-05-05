@@ -15,6 +15,7 @@ import {
     interpolate,
     OffthreadVideo,
     useCurrentFrame,
+    staticFile,
 } from 'remotion'
 import { EditManifest, VideoClip, AudioClip, SubtitleClip, OverlayClip, Clip } from '../types/editor'
 
@@ -24,6 +25,17 @@ import { EditManifest, VideoClip, AudioClip, SubtitleClip, OverlayClip, Clip } f
 interface VideoCompositionProps {
     manifest: EditManifest
 }
+
+/**
+ * Helper to resolve assets correctly.
+ * If the URL is a local blob (from the browser), we return it as is.
+ * Otherwise, we wrap it with staticFile() for Remotion rendering.
+ */
+const resolveAsset = (url: string) => {
+    if (!url) return '';
+    if (url.startsWith('blob:')) return url;
+    return staticFile(url);
+};
 
 export const VideoComposition: React.FC<VideoCompositionProps> = ({ manifest }) => {
     const frame = useCurrentFrame()
@@ -106,7 +118,7 @@ const VideoClipRenderer: React.FC<VideoClipRendererProps> = ({ clip, source, fps
         <Sequence from={startFrame} durationInFrames={durationFrames} premountFor={60}>
             <AbsoluteFill style={filterStyle}>
                 <OffthreadVideo
-                    src={clip.customVideoUrl || source.videoUrl}
+                    src={resolveAsset(clip.customVideoUrl || source.videoUrl)}
                     startFrom={Math.max(0, Math.round(clip.sourceStart * fps))}
                     endAt={Math.max(0, Math.round(clip.sourceEnd * fps))}
                     playbackRate={clip.speed}
@@ -120,8 +132,9 @@ const VideoClipRenderer: React.FC<VideoClipRendererProps> = ({ clip, source, fps
                     pauseWhenBuffering
                     onError={(e) => {
                         console.error(`❌ [Render Error] Video failed to load for clip ${clip.id}`);
-                        console.error(`❌ [Render Error] URL: ${clip.customVideoUrl || source.videoUrl}`);
-                        // console.error(JSON.stringify(e));
+                        const resolvedUrl = resolveAsset(clip.customVideoUrl || source.videoUrl);
+                        console.error(`❌ [Render Error] Source URL: ${clip.customVideoUrl || source.videoUrl}`);
+                        console.error(`❌ [Render Error] Resolved URL (resolveAsset): ${resolvedUrl}`);
                     }}
                 />
             </AbsoluteFill>
@@ -193,9 +206,8 @@ const AudioClipRenderer: React.FC<AudioClipRendererProps> = ({ clip, source, mas
         <Sequence from={startFrame} durationInFrames={durationFrames} premountFor={60}>
             {isVideoSource ? (
                 <OffthreadVideo
-                    src={audioSrc}
+                    src={resolveAsset(audioSrc)}
                     startFrom={Math.max(0, Math.round(clip.sourceStart * fps))}
-                    endAt={Math.max(0, Math.round(clip.sourceEnd * fps))}
                     volume={volume}
                     // Hide the video, we only want audio
                     style={{ opacity: 0, width: 0, height: 0 }}
@@ -203,7 +215,7 @@ const AudioClipRenderer: React.FC<AudioClipRendererProps> = ({ clip, source, mas
                 />
             ) : (
                 <Audio
-                    src={audioSrc}
+                    src={resolveAsset(audioSrc)}
                     startFrom={Math.max(0, Math.round(clip.sourceStart * fps))}
                     volume={volume}
                     pauseWhenBuffering
@@ -307,7 +319,7 @@ const OverlayRenderer: React.FC<OverlayRendererProps> = ({ clip }) => {
             )}
             {(clip.overlayType === 'image' || clip.overlayType === 'logo') && (
                 <img
-                    src={clip.content}
+                    src={resolveAsset(clip.content)}
                     alt=""
                     style={{
                         ...style,

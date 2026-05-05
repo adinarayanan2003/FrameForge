@@ -22,21 +22,28 @@ import {
     X,
     Monitor,
     Smartphone,
-    FilePlus2
+    FilePlus2,
+    Sparkles
 } from 'lucide-react'
 
 interface EditorToolbarProps {
     onSave?: () => void
     onExport?: () => void
     onClose?: () => void
+    onUpload?: (file: File) => Promise<string>
     isSaving?: boolean
+    onToggleAgent?: () => void
+    isAgentOpen?: boolean
 }
 
 export const EditorToolbar: React.FC<EditorToolbarProps> = ({
     onSave,
     onExport,
     onClose,
+    onUpload,
     isSaving = false,
+    onToggleAgent,
+    isAgentOpen = false,
 }) => {
     const {
         selectedClipId,
@@ -83,49 +90,59 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         }
     }
 
-    const handleImportMedia = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImportMedia = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
 
+        // 1. Create a temporary blob URL for instant feedback
         const blobUrl = URL.createObjectURL(file)
+        let clipId: string | null = null
 
-        // Handle Images
+        // 2. Add the clip to the store immediately (optimistic UI)
         if (file.type.startsWith('image/')) {
             const type = file.type.includes('svg') || file.type.includes('png') ? 'logo' : 'image'
-            addOverlayClip(blobUrl, type)
-            return
-        }
-
-        // Handle Audio
-        if (file.type.startsWith('audio/')) {
+            clipId = addOverlayClip(blobUrl, type)
+        } else if (file.type.startsWith('audio/')) {
             const audio = document.createElement('audio')
             audio.src = blobUrl
-            audio.onloadedmetadata = () => {
-                addAudioClip(blobUrl, audio.duration, 'sfx') // Default to SFX
-                audio.remove()
-            }
-            return
-        }
-
-        // Handle Video
-        if (file.type.startsWith('video/')) {
+            await new Promise((resolve) => {
+                audio.onloadedmetadata = () => {
+                    clipId = addAudioClip(blobUrl, audio.duration, 'sfx')
+                    audio.remove()
+                    resolve(null)
+                }
+            })
+        } else if (file.type.startsWith('video/')) {
             const video = document.createElement('video')
             video.src = blobUrl
-
-            video.onloadedmetadata = () => {
-                const duration = video.duration
-                const width = video.videoWidth
-                const height = video.videoHeight
-                addCustomVideoClip(blobUrl, duration, width, height)
-                video.remove()
-            }
-
-            video.onerror = () => {
-                console.error('Failed to load video metadata')
-                video.remove()
-            }
+            await new Promise((resolve) => {
+                video.onloadedmetadata = () => {
+                    clipId = addCustomVideoClip(blobUrl, video.duration, video.videoWidth, video.videoHeight)
+                    video.remove()
+                    resolve(null)
+                }
+            })
         }
-        // Reset input so same file can be selected again
+
+        // 3. Trigger background upload and update the clip path
+        if (clipId && onUpload) {
+            onUpload(file).then((serverUrl) => {
+                if (file.type.startsWith('image/')) {
+                    updateClip(clipId!, { content: serverUrl })
+                } else if (file.type.startsWith('audio/')) {
+                    updateClip(clipId!, { source: serverUrl })
+                } else if (file.type.startsWith('video/')) {
+                    updateClip(clipId!, { customVideoUrl: serverUrl })
+                }
+                URL.revokeObjectURL(blobUrl)
+                console.log('✅ Background upload complete:', serverUrl)
+            }).catch((err) => {
+                console.error('❌ Background upload failed:', err)
+                // We keep the blob URL so it still works in the session
+            })
+        }
+
+        // Reset input
         e.target.value = ''
     }
 
@@ -211,6 +228,20 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                 )}
 
                 <div className="w-[1px] h-4 bg-border/20 mx-2" />
+
+                {onToggleAgent && (
+                    <button
+                        onClick={onToggleAgent}
+                        className={`p-2 rounded-lg transition-colors ${
+                            isAgentOpen
+                                ? 'text-primary bg-primary/10'
+                                : 'text-secondary hover:text-foreground hover:bg-card/50'
+                        }`}
+                        title="Agent editor"
+                    >
+                        <Sparkles size={18} />
+                    </button>
+                )}
 
                 {/* Import Media */}
                 <label className="p-2 text-secondary hover:text-foreground hover:bg-card/50 rounded-lg transition-colors cursor-pointer" title="Import media file">
