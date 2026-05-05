@@ -33,6 +33,7 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
     const videoClips = useEditorStore(selectVideoClips)
     const audioClips = useEditorStore(selectAudioClips)
     const subtitleClips = useEditorStore(selectSubtitleClips)
+    const phantomClips = useEditorStore((state) => state.phantomClips)
     const duration = useEditorStore(selectTimelineDuration)
 
     // Calculate timeline width based on duration and zoom (plus label offset and buffer)
@@ -123,6 +124,12 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
             // Filter for overlay clips
             clips: useEditorStore(state => state.clips.filter((c) => c.type === 'overlay')),
             color: 'bg-pink-500/80'
+        },
+        {
+            id: 'proposed',
+            label: 'Proposed',
+            clips: phantomClips,
+            color: 'bg-red-500/60'
         },
     ]
 

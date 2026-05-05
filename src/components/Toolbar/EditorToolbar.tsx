@@ -22,7 +22,8 @@ import {
     X,
     Monitor,
     Smartphone,
-    FilePlus2
+    FilePlus2,
+    Sparkles
 } from 'lucide-react'
 
 interface EditorToolbarProps {
@@ -31,6 +32,8 @@ interface EditorToolbarProps {
     onClose?: () => void
     onUpload?: (file: File) => Promise<string>
     isSaving?: boolean
+    onToggleAgent?: () => void
+    isAgentOpen?: boolean
 }
 
 export const EditorToolbar: React.FC<EditorToolbarProps> = ({
@@ -39,6 +42,8 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
     onClose,
     onUpload,
     isSaving = false,
+    onToggleAgent,
+    isAgentOpen = false,
 }) => {
     const {
         selectedClipId,
@@ -223,6 +228,20 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                 )}
 
                 <div className="w-[1px] h-4 bg-border/20 mx-2" />
+
+                {onToggleAgent && (
+                    <button
+                        onClick={onToggleAgent}
+                        className={`p-2 rounded-lg transition-colors ${
+                            isAgentOpen
+                                ? 'text-primary bg-primary/10'
+                                : 'text-secondary hover:text-foreground hover:bg-card/50'
+                        }`}
+                        title="Agent editor"
+                    >
+                        <Sparkles size={18} />
+                    </button>
+                )}
 
                 {/* Import Media */}
                 <label className="p-2 text-secondary hover:text-foreground hover:bg-card/50 rounded-lg transition-colors cursor-pointer" title="Import media file">

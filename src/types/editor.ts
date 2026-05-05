@@ -177,6 +177,14 @@ export interface SubtitleStyle {
     italic: boolean
     /** Text shadow */
     shadow: boolean
+    /** Optional text stroke color */
+    stroke?: string
+    /** Optional text stroke width */
+    strokeWidth?: number
+    /** Optional highlighted-word color */
+    highlightColor?: string
+    /** Optional caption animation name */
+    animation?: string
 }
 
 export interface OverlayPosition {
@@ -207,6 +215,8 @@ export interface Transition {
     duration: number
     /** Clip ID this transition applies after */
     afterClipId: string
+    /** Optional incoming clip ID */
+    beforeClipId?: string
 }
 
 // ============================================================================
@@ -285,6 +295,8 @@ export interface EditorState {
     transitions: Transition[]
     /** Currently selected clip ID */
     selectedClipId: string | null
+    /** Currently selected clip IDs */
+    selectedClipIds: string[]
     /** Playhead position (seconds) */
     playheadPosition: number
     /** Playing state */
@@ -318,6 +330,12 @@ export interface EditorState {
     clipboard: Clip | null
     /** Whether to show safe zone overlays */
     showSafeZones: boolean
+    /** Non-persistent preview clips proposed by the agent */
+    phantomClips: Clip[]
+    /** Editor loading flag */
+    isLoading?: boolean
+    /** Editor error message */
+    error?: string | null
 }
 
 // ============================================================================

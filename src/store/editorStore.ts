@@ -16,8 +16,17 @@ import {
     SourceVideo,
     SourceShot,
     Transition,
-    EditManifest
+    TransitionType,
+    EditManifest,
+    SubtitleStyle
 } from '@/types/editor'
+
+interface SaveHistoryOptions {
+    key?: string
+    force?: boolean
+}
+
+let historyTransactionDepth = 0
 
 // ============================================================================
 // INITIAL STATE
@@ -29,6 +38,7 @@ const initialState: EditorState = {
     clips: [],
     transitions: [],
     selectedClipId: null,
+    selectedClipIds: [],
     playheadPosition: 0,
     isPlaying: false,
     zoom: 50, // pixels per second
@@ -52,6 +62,9 @@ const initialState: EditorState = {
     isDirty: false,
     clipboard: null as Clip | null,
     showSafeZones: false,
+    phantomClips: [],
+    isLoading: false,
+    error: null,
 }
 
 // ============================================================================
@@ -68,10 +81,13 @@ interface EditorStore extends EditorState {
     addClip: (clip: Clip) => void
     addCustomVideoClip: (videoUrl: string, duration: number, width: number, height: number) => string
     addAudioClip: (audioUrl: string, duration: number, trackType: AudioClip['trackType']) => string
-    addOverlayClip: (imageUrl: string, type: 'image' | 'logo') => string
-    updateClip: (id: string, updates: Partial<Clip>) => void
+    addOverlayClip: (content: string, type: 'image' | 'logo' | 'text') => string
+    addCaptionClip: (text: string, start: number, end: number, style?: SubtitleStyle) => string
+    updateClip: (id: string, updates: Partial<Clip>, options?: { historyKey?: string }) => void
+    updateSelectedClips: (updates: Partial<Clip>) => void
     deleteClip: (id: string) => void
-    selectClip: (id: string | null) => void
+    deleteSelectedClips: () => void
+    selectClip: (id: string | null, mode?: 'replace' | 'toggle' | 'append') => void
     moveClip: (id: string, timelineStart: number) => void
     trimClip: (id: string, edge: 'start' | 'end', newValue: number) => void
     splitClipAtPlayhead: (id: string) => void
@@ -97,7 +113,11 @@ interface EditorStore extends EditorState {
     // History actions
     undo: () => void
     redo: () => void
-    saveToHistory: () => void
+    saveToHistory: (options?: SaveHistoryOptions) => void
+    beginHistoryCheckpoint: (key: string) => void
+    endHistoryCheckpoint: (key: string) => void
+    beginHistoryTransaction: (key: string) => void
+    endHistoryTransaction: (key: string) => void
 
     // Audio actions
     setMasterVolume: (volume: number) => void
@@ -111,6 +131,14 @@ interface EditorStore extends EditorState {
     // State actions
     markSaved: () => void
     reset: () => void
+    toggleSafeZones: () => void
+    setPhantomClips: (clips: Clip[]) => void
+    clearPhantomClips: () => void
+
+    // Transition actions
+    addTransition: (afterClipId: string, type: TransitionType, duration: number, beforeClipId?: string) => void
+    updateTransition: (id: string, updates: Partial<Transition>) => void
+    removeTransition: (id: string) => void
 }
 
 // ============================================================================
@@ -229,8 +257,9 @@ export const useEditorStore = create<EditorStore>()(
                     })
                 }
 
-                // Track 3: SFX audio (extracted from video, if available)
-                if (source.sfxUrl) {
+                // Track 3: SFX audio. Fall back to source video so embedded audio remains editable.
+                const mainAudioUrl = source.sfxUrl || source.videoUrl
+                if (mainAudioUrl) {
                     audioClips.push({
                         id: 'audio-sfx',
                         type: 'audio',
@@ -239,7 +268,7 @@ export const useEditorStore = create<EditorStore>()(
                         timelineStart: 0,
                         timelineEnd: source.duration,
                         locked: false,
-                        source: source.sfxUrl,
+                        source: mainAudioUrl,
                         sourceStart: 0,
                         sourceEnd: source.duration,
                         volume: 0.5,
@@ -359,7 +388,7 @@ export const useEditorStore = create<EditorStore>()(
             return clipId
         },
 
-        addOverlayClip: (imageUrl, type) => {
+        addOverlayClip: (content, type) => {
             get().saveToHistory()
 
             const state = get()
@@ -375,13 +404,52 @@ export const useEditorStore = create<EditorStore>()(
                 timelineEnd: timelineEnd + duration,
                 locked: false,
                 overlayType: type,
-                content: imageUrl,
+                content,
                 opacity: 1,
                 position: { x: 0.25, y: 0.25, width: 0.5, height: 0.5, rotation: 0 } // Centered default
             }
 
             set((state) => {
                 state.clips.push(newClip)
+                state.isDirty = true
+            })
+
+            return clipId
+        },
+
+        addCaptionClip: (text, start, end, style) => {
+            get().saveToHistory()
+
+            const clipId = `agent-caption-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+            const newClip: SubtitleClip = {
+                id: clipId,
+                type: 'subtitle',
+                track: 4,
+                timelineStart: Math.max(0, start),
+                timelineEnd: Math.max(start + 0.1, end),
+                locked: false,
+                text,
+                style: style ?? {
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize: 32,
+                    color: '#FFFFFF',
+                    backgroundColor: 'transparent',
+                    textAlign: 'center',
+                    verticalPosition: 0.82,
+                    bold: true,
+                    italic: false,
+                    shadow: true,
+                    stroke: '#000000',
+                    strokeWidth: 4,
+                    highlightColor: '#FACC15',
+                    animation: 'pop_in',
+                },
+            }
+
+            set((state) => {
+                state.clips.push(newClip)
+                state.selectedClipId = clipId
+                state.selectedClipIds = [clipId]
                 state.isDirty = true
             })
 
@@ -399,6 +467,18 @@ export const useEditorStore = create<EditorStore>()(
             })
         },
 
+        updateSelectedClips: (updates) => {
+            const ids = get().selectedClipIds
+            if (!ids.length) return
+            get().saveToHistory()
+            set((state) => {
+                state.clips = state.clips.map((clip) =>
+                    ids.includes(clip.id) ? ({ ...clip, ...updates } as Clip) : clip
+                )
+                state.isDirty = true
+            })
+        },
+
         deleteClip: (id) => {
             get().saveToHistory()
             set((state) => {
@@ -406,13 +486,46 @@ export const useEditorStore = create<EditorStore>()(
                 if (state.selectedClipId === id) {
                     state.selectedClipId = null
                 }
+                state.selectedClipIds = state.selectedClipIds.filter((clipId) => clipId !== id)
                 state.isDirty = true
             })
         },
 
-        selectClip: (id) => {
+        deleteSelectedClips: () => {
+            const ids = get().selectedClipIds
+            if (!ids.length) return
+            get().saveToHistory()
             set((state) => {
-                state.selectedClipId = id
+                state.clips = state.clips.filter((clip) => !ids.includes(clip.id))
+                state.selectedClipId = null
+                state.selectedClipIds = []
+                state.isDirty = true
+            })
+        },
+
+        selectClip: (id, mode = 'replace') => {
+            set((state) => {
+                if (!id) {
+                    state.selectedClipId = null
+                    state.selectedClipIds = []
+                    return
+                }
+
+                if (mode === 'toggle') {
+                    if (state.selectedClipIds.includes(id)) {
+                        state.selectedClipIds = state.selectedClipIds.filter((clipId) => clipId !== id)
+                    } else {
+                        state.selectedClipIds.push(id)
+                    }
+                } else if (mode === 'append') {
+                    if (!state.selectedClipIds.includes(id)) {
+                        state.selectedClipIds.push(id)
+                    }
+                } else {
+                    state.selectedClipIds = [id]
+                }
+
+                state.selectedClipId = state.selectedClipIds[0] ?? null
             })
         },
 
@@ -529,6 +642,7 @@ export const useEditorStore = create<EditorStore>()(
                 }
                 state.clips.push(newClip)
                 state.selectedClipId = newClip.id
+                state.selectedClipIds = [newClip.id]
                 state.isDirty = true
             })
         },
@@ -628,6 +742,7 @@ export const useEditorStore = create<EditorStore>()(
         // ========== HISTORY ACTIONS ==========
 
         saveToHistory: () => {
+            if (historyTransactionDepth > 0) return
             const currentState = get()
             set((state) => {
                 // Don't save if already at max history
@@ -640,6 +755,25 @@ export const useEditorStore = create<EditorStore>()(
                 })
                 state.history.future = []
             })
+        },
+
+        beginHistoryCheckpoint: () => {
+            get().saveToHistory({ force: true })
+        },
+
+        endHistoryCheckpoint: () => {
+            // Checkpoint writes are synchronous in this store.
+        },
+
+        beginHistoryTransaction: () => {
+            if (historyTransactionDepth === 0) {
+                get().saveToHistory({ force: true })
+            }
+            historyTransactionDepth += 1
+        },
+
+        endHistoryTransaction: () => {
+            historyTransactionDepth = Math.max(0, historyTransactionDepth - 1)
         },
 
         undo: () => {
@@ -662,6 +796,8 @@ export const useEditorStore = create<EditorStore>()(
                     state.clips = previous.clips
                     state.transitions = previous.transitions
                     state.selectedClipId = previous.selectedClipId
+                    state.selectedClipIds = previous.selectedClipIds || (previous.selectedClipId ? [previous.selectedClipId] : [])
+                    state.phantomClips = []
                     state.audio = previous.audio
                     state.exportSettings = previous.exportSettings
                     state.isDirty = true
@@ -689,6 +825,8 @@ export const useEditorStore = create<EditorStore>()(
                     state.clips = next.clips
                     state.transitions = next.transitions
                     state.selectedClipId = next.selectedClipId
+                    state.selectedClipIds = next.selectedClipIds || (next.selectedClipId ? [next.selectedClipId] : [])
+                    state.phantomClips = []
                     state.audio = next.audio
                     state.exportSettings = next.exportSettings
                     state.isDirty = true
@@ -769,6 +907,58 @@ export const useEditorStore = create<EditorStore>()(
             })
         },
 
+        toggleSafeZones: () => {
+            set((state) => {
+                state.showSafeZones = !state.showSafeZones
+            })
+        },
+
+        setPhantomClips: (clips) => {
+            set((state) => {
+                state.phantomClips = clips
+            })
+        },
+
+        clearPhantomClips: () => {
+            set((state) => {
+                state.phantomClips = []
+            })
+        },
+
+        addTransition: (afterClipId, type, duration, beforeClipId) => {
+            get().saveToHistory()
+            set((state) => {
+                const id = `transition-${afterClipId}-${beforeClipId || 'next'}-${Date.now()}`
+                state.transitions.push({
+                    id,
+                    afterClipId,
+                    beforeClipId,
+                    type,
+                    duration,
+                })
+                state.isDirty = true
+            })
+        },
+
+        updateTransition: (id, updates) => {
+            get().saveToHistory()
+            set((state) => {
+                const index = state.transitions.findIndex((transition) => transition.id === id)
+                if (index !== -1) {
+                    state.transitions[index] = { ...state.transitions[index], ...updates }
+                    state.isDirty = true
+                }
+            })
+        },
+
+        removeTransition: (id) => {
+            get().saveToHistory()
+            set((state) => {
+                state.transitions = state.transitions.filter((transition) => transition.id !== id)
+                state.isDirty = true
+            })
+        },
+
         reset: () => {
             set(initialState)
         },
@@ -790,6 +980,9 @@ export const selectSubtitleClips = (state: EditorState) =>
 
 export const selectSelectedClip = (state: EditorState) =>
     state.clips.find((c) => c.id === state.selectedClipId) || null
+
+export const selectSelectedClips = (state: EditorState) =>
+    state.clips.filter((c) => state.selectedClipIds.includes(c.id))
 
 export const selectTimelineDuration = (state: EditorState) =>
     Math.max(...state.clips.map((c) => c.timelineEnd), 0)

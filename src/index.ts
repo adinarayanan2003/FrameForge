@@ -48,6 +48,7 @@ export * from './store/editorStore'
 
 // Types
 export * from './types/editor'
+export * from './types/agent'
 
 // Remotion composition (for render backend)
 export { VideoComposition, getCompositionConfig } from './remotion'
