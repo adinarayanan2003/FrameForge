@@ -1,14 +1,14 @@
-# Owly Video Editor
+# FrameForge
 
-A modular timeline-based video editor for post-processing AI-generated videos from [Owly Studio](https://owly.studio).
+A modular open-source timeline editor for browser-native, agentic video editing.
 
 ## Overview
 
-Owly Editor is a standalone React/Next.js video editor with timeline editing, Remotion preview/rendering, and an optional local Python agent backend. It can run independently as a browser-native agentic video editor while still exporting the same lightweight edit manifest used by Owly Studio.
+FrameForge is a standalone React/Next.js video editor with timeline editing, Remotion preview/rendering, and an optional local Python agent backend. It can run independently as a browser-native agentic video editor while still exporting a lightweight edit manifest for custom render pipelines.
 
 ## Architecture & Data Flow
 
-Owly Editor uses a **"Write Once, Render Anywhere"** philosophy powered by Remotion.
+FrameForge uses a **"Write Once, Render Anywhere"** philosophy powered by Remotion.
 
 ### 1. The Edit Manifest (Single Source of Truth)
 Everything transforms into a lightweight JSON object called the `EditManifest`. This JSON contains:
@@ -86,7 +86,7 @@ graph TD
 ## Installation
 
 ```bash
-# From the owly_editor directory
+# From the FrameForge repo directory
 npm install
 ```
 
@@ -110,12 +110,30 @@ brew install ffmpeg
 Create a local environment file or export these values before running the services:
 
 ```bash
-GEMINI_API_KEY=your_gemini_key
-AGENT_BACKEND_URL=http://127.0.0.1:5001
-AGENT_API_KEY=optional_shared_secret
+cp .env.example .env.local
 ```
 
-If `AGENT_API_KEY` is set for Next, set the same value as `API_KEY` or `AGENT_API_KEY` for the Python backend.
+Then edit `.env.local`:
+
+```bash
+OPENAI_API_KEY=your_openai_key
+OPENAI_MODEL=gpt-5.2
+AGENT_BACKEND_URL=http://127.0.0.1:5001
+AGENT_API_KEY=optional_shared_secret
+API_KEY=optional_shared_secret
+```
+
+If `AGENT_API_KEY` is set for Next, set the same value as `API_KEY` or `AGENT_API_KEY` for the Python backend. The backend reads `.env`, `.env.local`, `backend/.env`, and `backend/.env.local`.
+
+Quick checks:
+
+```bash
+# Next UI should return 200
+curl -I http://localhost:3001
+
+# Agent backend should return ok=true and openaiConfigured=true
+curl http://127.0.0.1:5001/health
+```
 
 ## Development
 
@@ -153,7 +171,7 @@ npm run build
 ## Usage
 
 ```tsx
-import { VideoEditor } from '@owly/editor'
+import { VideoEditor } from 'frameforge-editor'
 
 function EditorPage({ video, shots }) {
   const handleSave = async (manifest) => {
@@ -199,4 +217,4 @@ For more detailed information on setup and planning, see the following:
 - **Tailwind CSS**
 - **Next.js API Routes**
 - **Flask + LangGraph-compatible Python agents**
-- **Gemini / faster-whisper / FFmpeg** for agent planning, captions, and media analysis
+- **OpenAI / faster-whisper / FFmpeg** for agent planning, captions, and media analysis

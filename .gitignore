@@ -10,6 +10,11 @@ __pycache__/
 dist/
 .next/
 out/
+out.mp4
+render_manifest.json
+
+# User-uploaded local media
+public/uploads/
 
 # Testing
 coverage/

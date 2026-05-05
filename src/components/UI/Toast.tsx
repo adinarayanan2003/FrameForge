@@ -42,7 +42,7 @@ export const Toast: React.FC<ToastProps> = ({ message, type, visible, onHide }) 
 
     return (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-200">
-            <div className="flex items-center gap-2 px-4 py-2 bg-slate-800/95 backdrop-blur-sm border border-slate-700 rounded-lg shadow-lg text-white text-sm">
+            <div className="flex items-center gap-2 rounded-md border border-primary/20 bg-[#0c1118]/95 px-4 py-2 text-sm text-foreground shadow-[0_18px_50px_rgba(0,0,0,0.42)] backdrop-blur-sm">
                 <span className="text-primary">{iconMap[type]}</span>
                 <span>{message}</span>
             </div>

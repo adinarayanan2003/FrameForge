@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
         console.log('🔍 Selecting composition...');
         const composition = await selectComposition({
             serveUrl: bundleLocation,
-            id: 'OwlyVideoComposition',
+            id: 'FrameForgeComposition',
             inputProps: { manifest },
         });
 
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
             status: 200,
             headers: {
                 'Content-Type': 'video/mp4',
-                'Content-Disposition': `attachment; filename="owly-render-${manifest.jobId}.mp4"`,
+                'Content-Disposition': `attachment; filename="frameforge-render-${manifest.jobId}.mp4"`,
                 'Content-Length': fileBuffer.length.toString(),
             },
         });

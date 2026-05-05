@@ -14,16 +14,28 @@ interface PropertiesPanelProps {
     className?: string
 }
 
+const numberFieldClass = 'w-full rounded-md border border-primary/10 bg-[#050608] px-2 py-1 text-sm text-foreground outline-none focus:border-primary/60'
+const textAreaClass = 'w-full min-h-[80px] resize-none rounded-md border border-primary/10 bg-[#050608] px-3 py-2 text-sm text-foreground outline-none placeholder:text-secondary/50 focus:border-primary/60'
+const inactiveButtonClass = 'ff-control text-secondary hover:text-foreground'
+const activeButtonClass = 'bg-primary text-primary-foreground shadow-[0_0_20px_rgba(139,216,255,0.14)]'
+
 export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className = '' }) => {
     const selectedClip = useEditorStore(selectSelectedClip)
     const { updateClip } = useEditorStore()
 
     if (!selectedClip) {
         return (
-            <div className={`p-4 ${className}`}>
-                <p className="text-sm text-secondary text-center py-8">
-                    Select a clip to edit its properties
-                </p>
+            <div className={`flex flex-col ${className}`}>
+                <div className="border-b border-primary/10 p-4">
+                    <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-secondary">
+                        Inspector
+                    </h3>
+                </div>
+                <div className="flex flex-1 items-center justify-center p-4">
+                    <p className="rounded-md border border-primary/10 bg-[#0c1118]/70 px-4 py-3 text-center text-sm text-secondary">
+                        Select a clip to edit its properties
+                    </p>
+                </div>
             </div>
         )
     }
@@ -31,8 +43,9 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className = ''
     return (
         <div className={`flex flex-col overflow-y-auto ${className}`}>
             {/* Header */}
-            <div className="p-4 border-b border-border/20">
-                <h3 className="text-sm font-medium text-foreground capitalize">
+            <div className="border-b border-primary/10 p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-secondary">Inspector</p>
+                <h3 className="mt-1 text-sm font-semibold capitalize text-foreground">
                     {selectedClip.type} Properties
                 </h3>
             </div>
@@ -106,8 +119,8 @@ const VideoClipProperties: React.FC<VideoClipPropertiesProps> = ({ clip, onUpdat
             </div>
 
             {/* Filters */}
-            <div className="space-y-4 pt-4 border-t border-border/20">
-                <p className="text-xs text-secondary font-medium">Color Correction</p>
+            <div className="space-y-4 border-t border-primary/10 pt-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-secondary">Color Correction</p>
 
                 <div className="space-y-2">
                     <label className="text-xs text-secondary">Brightness</label>
@@ -212,10 +225,10 @@ const AudioClipProperties: React.FC<AudioClipPropertiesProps> = ({ clip, onUpdat
 
             {/* Auto Ducking (Only for BGM/SFX) */}
             {clip.trackType !== 'voiceover' && (
-                <div className="flex items-center justify-between pt-2 border-t border-border/20">
+                <div className="flex items-center justify-between border-t border-primary/10 pt-2">
                     <label className="text-xs text-secondary">Auto-Duck against Voice</label>
                     {/* Placeholder for future implementation */}
-                    <div className="text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded">
+                    <div className="rounded border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
                         Recommended
                     </div>
                 </div>
@@ -232,7 +245,7 @@ const AudioClipProperties: React.FC<AudioClipPropertiesProps> = ({ clip, onUpdat
                         step="0.1"
                         value={clip.fadeIn}
                         onChange={(e) => onUpdate({ fadeIn: Math.max(0, parseFloat(e.target.value) || 0) })}
-                        className="w-full bg-card/50 border border-border/30 rounded px-2 py-1 text-sm"
+                        className={numberFieldClass}
                     />
                 </div>
                 <div className="space-y-2">
@@ -244,7 +257,7 @@ const AudioClipProperties: React.FC<AudioClipPropertiesProps> = ({ clip, onUpdat
                         step="0.1"
                         value={clip.fadeOut}
                         onChange={(e) => onUpdate({ fadeOut: Math.max(0, parseFloat(e.target.value) || 0) })}
-                        className="w-full bg-card/50 border border-border/30 rounded px-2 py-1 text-sm"
+                        className={numberFieldClass}
                     />
                 </div>
             </div>
@@ -270,7 +283,7 @@ const SubtitleClipProperties: React.FC<SubtitleClipPropertiesProps> = ({ clip, o
                 <textarea
                     value={clip.text}
                     onChange={(e) => onUpdate({ text: e.target.value })}
-                    className="w-full bg-card/50 border border-border/30 rounded-lg px-3 py-2 text-sm text-foreground min-h-[80px] resize-none"
+                    className={textAreaClass}
                     placeholder="Subtitle text..."
                 />
             </div>
@@ -304,7 +317,7 @@ const SubtitleClipProperties: React.FC<SubtitleClipPropertiesProps> = ({ clip, o
                             onChange={(e) => onUpdate({
                                 style: { ...clip.style, color: e.target.value }
                             })}
-                            className="w-8 h-8 rounded border-0 cursor-pointer"
+                            className="h-8 w-8 cursor-pointer rounded border border-primary/10 bg-transparent"
                         />
                         <span className="text-xs text-secondary font-mono">{clip.style.color}</span>
                     </div>
@@ -319,7 +332,7 @@ const SubtitleClipProperties: React.FC<SubtitleClipPropertiesProps> = ({ clip, o
                             onChange={(e) => onUpdate({
                                 style: { ...clip.style, backgroundColor: e.target.value }
                             })}
-                            className="w-8 h-8 rounded border-0 cursor-pointer"
+                            className="h-8 w-8 cursor-pointer rounded border border-primary/10 bg-transparent"
                         />
                     </div>
                 </div>
@@ -331,18 +344,18 @@ const SubtitleClipProperties: React.FC<SubtitleClipPropertiesProps> = ({ clip, o
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => onUpdate({ style: { ...clip.style, verticalPosition: 0.1 } })}
-                        className={`flex-1 py-1.5 text-xs rounded ${clip.style.verticalPosition < 0.5
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-card/50 text-secondary'
+                        className={`flex-1 rounded py-1.5 text-xs ${clip.style.verticalPosition < 0.5
+                            ? activeButtonClass
+                            : inactiveButtonClass
                             }`}
                     >
                         Top
                     </button>
                     <button
                         onClick={() => onUpdate({ style: { ...clip.style, verticalPosition: 0.9 } })}
-                        className={`flex-1 py-1.5 text-xs rounded ${clip.style.verticalPosition >= 0.5
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-card/50 text-secondary'
+                        className={`flex-1 rounded py-1.5 text-xs ${clip.style.verticalPosition >= 0.5
+                            ? activeButtonClass
+                            : inactiveButtonClass
                             }`}
                     >
                         Bottom
@@ -354,27 +367,27 @@ const SubtitleClipProperties: React.FC<SubtitleClipPropertiesProps> = ({ clip, o
             <div className="flex items-center gap-2">
                 <button
                     onClick={() => onUpdate({ style: { ...clip.style, bold: !clip.style.bold } })}
-                    className={`px-3 py-1.5 text-sm font-bold rounded ${clip.style.bold
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-card/50 text-secondary'
+                    className={`rounded px-3 py-1.5 text-sm font-bold ${clip.style.bold
+                        ? activeButtonClass
+                        : inactiveButtonClass
                         }`}
                 >
                     B
                 </button>
                 <button
                     onClick={() => onUpdate({ style: { ...clip.style, italic: !clip.style.italic } })}
-                    className={`px-3 py-1.5 text-sm italic rounded ${clip.style.italic
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-card/50 text-secondary'
+                    className={`rounded px-3 py-1.5 text-sm italic ${clip.style.italic
+                        ? activeButtonClass
+                        : inactiveButtonClass
                         }`}
                 >
                     I
                 </button>
                 <button
                     onClick={() => onUpdate({ style: { ...clip.style, shadow: !clip.style.shadow } })}
-                    className={`px-3 py-1.5 text-sm rounded ${clip.style.shadow
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-card/50 text-secondary'
+                    className={`rounded px-3 py-1.5 text-sm ${clip.style.shadow
+                        ? activeButtonClass
+                        : inactiveButtonClass
                         }`}
                 >
                     Shadow
@@ -425,7 +438,7 @@ const OverlayClipProperties: React.FC<OverlayClipPropertiesProps> = ({ clip, onU
                 </div>
             </div>
 
-            <div className="w-full h-[1px] bg-border/20 my-2" />
+            <div className="my-2 h-px w-full bg-primary/10" />
 
             {/* Scale (Width/Height linked for now) */}
             <div className="space-y-2">
@@ -483,7 +496,7 @@ const OverlayClipProperties: React.FC<OverlayClipPropertiesProps> = ({ clip, onU
                         step="0.05"
                         value={clip.position.x}
                         onChange={(e) => updatePosition('x', parseFloat(e.target.value))}
-                        className="w-full bg-card/50 border border-border/30 rounded px-2 py-1 text-xs text-foreground"
+                        className={numberFieldClass}
                     />
                 </div>
                 <div className="space-y-2">
@@ -493,13 +506,13 @@ const OverlayClipProperties: React.FC<OverlayClipPropertiesProps> = ({ clip, onU
                         step="0.05"
                         value={clip.position.y}
                         onChange={(e) => updatePosition('y', parseFloat(e.target.value))}
-                        className="w-full bg-card/50 border border-border/30 rounded px-2 py-1 text-xs text-foreground"
+                        className={numberFieldClass}
                     />
                 </div>
             </div>
 
-            <p className="text-[10px] text-secondary/50 pt-2">
-                * Drag preview to move (Coming Soon)
+            <p className="pt-2 text-[10px] text-secondary/50">
+                Preview dragging coming soon
             </p>
         </>
     )

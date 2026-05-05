@@ -5,9 +5,12 @@ import traceback
 from functools import wraps
 
 import nest_asyncio
-from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+
+from agentic_editor.config import get_openai_model, load_agent_env
+
+load_agent_env()
 
 from agentic_editor.agents import CaptionAgent, CleanupAgent
 from agentic_editor.base_agent import BaseAgent
@@ -18,7 +21,6 @@ from agentic_editor.reasoning.intent_router import IntentRouter
 from agentic_editor.types import AgentRequest, AgentStatus
 
 nest_asyncio.apply()
-load_dotenv()
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
@@ -54,7 +56,12 @@ def create_app():
 
     @app.get("/health")
     def health():
-        return jsonify({"ok": True, "service": "owly-agent"})
+        return jsonify({
+            "ok": True,
+            "service": "frameforge-agent",
+            "openaiConfigured": bool(os.getenv("OPENAI_API_KEY")),
+            "model": get_openai_model(),
+        })
 
     @app.post("/api/agent/interact")
     @require_api_key

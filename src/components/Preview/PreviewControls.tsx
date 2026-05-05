@@ -39,15 +39,15 @@ const ProgressBar: React.FC = () => {
 
     return (
         <div
-            className="h-1 bg-card/50 rounded-full mb-1 cursor-pointer group"
+            className="group mb-2 h-1 cursor-pointer rounded-full bg-white/[0.08]"
             onClick={handleProgressClick}
         >
             <div
-                className="h-full bg-primary rounded-full relative will-change-transform"
+                className="relative h-full rounded-full bg-primary will-change-transform"
                 style={{ width: `${progress}%` }}
             >
                 {/* Scrubber handle */}
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg" />
+                <div className="absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-primary opacity-0 shadow-[0_0_20px_rgba(139,216,255,0.45)] transition-opacity group-hover:opacity-100" />
             </div>
         </div>
     )
@@ -120,14 +120,14 @@ export const PreviewControls: React.FC = () => {
     }, []) // Empty dependency array - handlers use getState()
 
     return (
-        <div className="px-3 py-1 bg-card/30 border-t border-border/20">
+        <div className="border-t border-primary/10 bg-[#080b10]/90 px-4 py-2">
             {/* Progress bar */}
             <ProgressBar />
 
             {/* Controls row */}
             <div className="flex items-center justify-between">
                 {/* Time display */}
-                <div className="text-xs text-secondary font-mono w-24">
+                <div className="w-24 font-mono text-xs text-secondary">
                     <TimeDisplay />
                 </div>
 
@@ -135,7 +135,7 @@ export const PreviewControls: React.FC = () => {
                 <div className="flex items-center gap-1">
                     <button
                         onClick={seekToStart}
-                        className="p-1 text-secondary hover:text-foreground transition-colors"
+                        className="rounded p-1 text-secondary transition-colors hover:bg-white/5 hover:text-foreground"
                         title="Jump to start (Home)"
                     >
                         <SkipBack size={16} />
@@ -143,7 +143,7 @@ export const PreviewControls: React.FC = () => {
 
                     <button
                         onClick={stepBackward}
-                        className="p-1 text-secondary hover:text-foreground transition-colors"
+                        className="rounded p-1 text-secondary transition-colors hover:bg-white/5 hover:text-foreground"
                         title="Previous frame (←)"
                     >
                         <ChevronLeft size={16} />
@@ -151,7 +151,7 @@ export const PreviewControls: React.FC = () => {
 
                     <button
                         onClick={togglePlayback}
-                        className="p-1.5 bg-primary text-primary-foreground rounded-full hover:opacity-90 transition-opacity"
+                        className="rounded-full bg-primary p-2 text-primary-foreground shadow-[0_0_24px_rgba(139,216,255,0.22)] transition-opacity hover:opacity-90"
                         title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
                     >
                         {isPlaying ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
@@ -159,7 +159,7 @@ export const PreviewControls: React.FC = () => {
 
                     <button
                         onClick={stepForward}
-                        className="p-1 text-secondary hover:text-foreground transition-colors"
+                        className="rounded p-1 text-secondary transition-colors hover:bg-white/5 hover:text-foreground"
                         title="Next frame (→)"
                     >
                         <ChevronRight size={16} />
@@ -167,7 +167,7 @@ export const PreviewControls: React.FC = () => {
 
                     <button
                         onClick={seekToEnd}
-                        className="p-1 text-secondary hover:text-foreground transition-colors"
+                        className="rounded p-1 text-secondary transition-colors hover:bg-white/5 hover:text-foreground"
                         title="Jump to end (End)"
                     >
                         <SkipForward size={16} />
@@ -175,7 +175,7 @@ export const PreviewControls: React.FC = () => {
                 </div>
 
                 {/* Duration display */}
-                <div className="text-xs text-secondary font-mono w-24 text-right">
+                <div className="w-24 text-right font-mono text-xs text-secondary">
                     {formatTime(duration)}
                 </div>
             </div>

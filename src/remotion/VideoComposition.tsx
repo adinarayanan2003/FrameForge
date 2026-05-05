@@ -234,10 +234,24 @@ interface SubtitleRendererProps {
 }
 
 const SubtitleRenderer: React.FC<SubtitleRendererProps> = ({ clip }) => {
-    const { style } = clip
     const { fps } = useVideoConfig()
     const startFrame = Math.round(clip.timelineStart * fps)
     const durationFrames = Math.round((clip.timelineEnd - clip.timelineStart) * fps)
+    const highlightWords = new Set(
+        (clip.style.highlightWords || []).map((word) =>
+            word.replace(/[^a-z0-9]/gi, '').toUpperCase()
+        )
+    )
+    const parts = clip.text
+        .replace(/\\\*/g, '*')
+        .split(/(\*[^*]+\*)/g)
+        .flatMap((part) => {
+            const trimmed = part.trim()
+            if (!trimmed) return []
+            if (trimmed.startsWith('*') && trimmed.endsWith('*')) return [trimmed]
+            return trimmed.split(/\s+/)
+        })
+        .filter((part) => part.trim().length > 0)
 
     return (
         <Sequence from={startFrame} durationInFrames={durationFrames}>
@@ -260,14 +274,36 @@ const SubtitleRenderer: React.FC<SubtitleRendererProps> = ({ clip }) => {
                             fontSize: clip.style.fontSize,
                             color: clip.style.color,
                             backgroundColor: clip.style.backgroundColor,
-                            padding: '8px 16px',
+                            padding: clip.style.backgroundColor === 'transparent' ? 0 : '8px 16px',
                             borderRadius: 4,
                             fontWeight: clip.style.bold ? 'bold' : 'normal',
                             fontStyle: clip.style.italic ? 'italic' : 'normal',
-                            textShadow: clip.style.shadow ? '2px 2px 4px rgba(0,0,0,0.5)' : 'none',
+                            lineHeight: 1.05,
+                            letterSpacing: 0,
+                            textTransform: 'uppercase',
+                            textShadow: clip.style.shadow ? '0 4px 14px rgba(0,0,0,0.75)' : 'none',
+                            WebkitTextStroke: clip.style.strokeWidth ? `${clip.style.strokeWidth}px ${clip.style.stroke || '#000000'}` : undefined,
+                            paintOrder: 'stroke fill',
+                            filter: clip.style.animation === 'pop_in' ? 'drop-shadow(0 8px 18px rgba(0,0,0,0.45))' : undefined,
                         }}
                     >
-                        {clip.text}
+                        {parts.map((part, index) => {
+                            const isHighlighted = part.startsWith('*') && part.endsWith('*')
+                            const text = (isHighlighted ? part.slice(1, -1) : part).replace(/\*/g, '').trim()
+                            const normalized = text.replace(/[^a-z0-9]/gi, '').toUpperCase()
+                            const shouldHighlight = isHighlighted || highlightWords.has(normalized)
+                            return (
+                                <span
+                                    key={`${index}-${text}`}
+                                    style={{
+                                        color: shouldHighlight ? clip.style.highlightColor || '#FACC15' : clip.style.color,
+                                    }}
+                                >
+                                    {text}
+                                    {index < parts.length - 1 ? ' ' : ''}
+                                </span>
+                            )
+                        })}
                     </div>
                 </div>
             </AbsoluteFill>
@@ -336,7 +372,7 @@ const OverlayRenderer: React.FC<OverlayRendererProps> = ({ clip }) => {
 // ============================================================================
 
 export const getCompositionConfig = (manifest: EditManifest) => ({
-    id: 'OwlyVideoComposition',
+    id: 'FrameForgeComposition',
     component: VideoComposition,
     durationInFrames: Math.ceil(manifest.timeline.duration * manifest.timeline.fps),
     fps: manifest.timeline.fps,

@@ -1,6 +1,6 @@
-# Owly Editor: System Design Plan
+# FrameForge: System Design Plan
 
-This document explains the high-level architecture and data flow of the Owly Editor, focusing on how the React frontend interacts with the serverless backend.
+This document explains the high-level architecture and data flow of FrameForge, focusing on how the React frontend interacts with the serverless backend.
 
 ## 1. High-Level Architecture
 

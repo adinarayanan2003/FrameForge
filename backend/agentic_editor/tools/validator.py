@@ -346,6 +346,9 @@ class ActionValidator:
         # Build expected timeline after actions
         affected_clips = {}
         for action in actions:
+            if action.get("actionType") not in ("trim", "trim_clip"):
+                continue
+
             clip_id = action.get("clipId")
             if clip_id:
                 if clip_id not in affected_clips:
@@ -361,12 +364,10 @@ class ActionValidator:
                             }
                             break
 
-                # Apply trim
-                if action.get("actionType") in ("trim", "trim_clip"):
-                    if action.get("startTime") is not None:
-                        affected_clips[clip_id]["new_start"] = action["startTime"]
-                    if action.get("endTime") is not None:
-                        affected_clips[clip_id]["new_end"] = action["endTime"]
+                if action.get("startTime") is not None:
+                    affected_clips[clip_id]["new_start"] = action["startTime"]
+                if action.get("endTime") is not None:
+                    affected_clips[clip_id]["new_end"] = action["endTime"]
 
         # Check for gaps (simplified)
         # This is a basic check - more complex logic would be needed for full implementation
@@ -375,8 +376,8 @@ class ActionValidator:
             if not original:
                 continue
             
-            new_start = data.get("new_start", original["start"])
-            new_end = data.get("new_end", original["end"])
+            new_start = data.get("new_start") if data.get("new_start") is not None else original["start"]
+            new_end = data.get("new_end") if data.get("new_end") is not None else original["end"]
             
             if new_end < new_start:
                 issues.append(ValidationIssue(

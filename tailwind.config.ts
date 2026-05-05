@@ -9,7 +9,7 @@ const config: Config = {
     theme: {
         extend: {
             colors: {
-                // Owly Studio design tokens (matching frontend)
+                // FrameForge design tokens (matching frontend)
                 background: 'hsl(var(--background))',
                 foreground: 'hsl(var(--foreground))',
                 card: {

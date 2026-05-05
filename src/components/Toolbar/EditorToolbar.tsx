@@ -6,7 +6,7 @@
 
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import { useEditorStore, selectCanUndo, selectCanRedo, selectSelectedClip } from '@/store/editorStore'
 import {
     Undo2,
@@ -63,8 +63,6 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
     const canUndo = useEditorStore(selectCanUndo)
     const canRedo = useEditorStore(selectCanRedo)
     const selectedClip = useEditorStore(selectSelectedClip)
-
-    const [showExportMenu, setShowExportMenu] = useState(false)
 
     const handleSplit = () => {
         if (selectedClipId) {
@@ -147,22 +145,22 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
     }
 
     return (
-        <div className="flex items-center justify-between px-4 py-2 bg-card/30 border-b border-border/20">
+        <div className="flex h-14 items-center justify-between border-b border-primary/10 bg-[#080b10]/90 px-3 backdrop-blur">
             {/* Left section: Close and title */}
-            <div className="flex items-center gap-4">
+            <div className="flex min-w-0 items-center gap-3">
                 {onClose && (
                     <button
                         onClick={onClose}
-                        className="p-2 text-secondary hover:text-foreground hover:bg-card/50 rounded-lg transition-colors"
+                        className="ff-control rounded-md p-2 text-secondary transition-colors hover:text-foreground"
                         title="Close editor"
                     >
-                        <X size={20} />
+                        <X size={18} />
                     </button>
                 )}
-                <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">Video Editor</span>
+                <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-foreground">FrameForge</div>
                     {isDirty && (
-                        <span className="text-xs text-secondary italic">• Unsaved changes</span>
+                        <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-accent">unsaved</div>
                     )}
                 </div>
             </div>
@@ -170,11 +168,11 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
             {/* Center section: Editing tools */}
             <div className="flex items-center gap-1">
                 {/* Undo/Redo */}
-                <div className="flex items-center border-r border-border/20 pr-2 mr-2">
+                <div className="mr-2 flex items-center border-r border-primary/10 pr-2">
                     <button
                         onClick={undo}
                         disabled={!canUndo}
-                        className="p-2 text-secondary hover:text-foreground hover:bg-card/50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="rounded-md p-2 text-secondary transition-colors hover:bg-white/5 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
                         title="Undo (Cmd+Z)"
                     >
                         <Undo2 size={18} />
@@ -182,7 +180,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                     <button
                         onClick={redo}
                         disabled={!canRedo}
-                        className="p-2 text-secondary hover:text-foreground hover:bg-card/50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="rounded-md p-2 text-secondary transition-colors hover:bg-white/5 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
                         title="Redo (Cmd+Shift+Z)"
                     >
                         <Redo2 size={18} />
@@ -193,7 +191,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                 <button
                     onClick={handleSplit}
                     disabled={!selectedClipId}
-                    className="p-2 text-secondary hover:text-foreground hover:bg-card/50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="rounded-md p-2 text-secondary transition-colors hover:bg-white/5 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
                     title="Split at playhead (S)"
                 >
                     <Scissors size={18} />
@@ -202,7 +200,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                 <button
                     onClick={handleDelete}
                     disabled={!selectedClipId}
-                    className="p-2 text-secondary hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="rounded-md p-2 text-secondary transition-colors hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-30"
                     title="Delete clip (Delete)"
                 >
                     <Trash2 size={18} />
@@ -211,7 +209,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                 <button
                     onClick={handleToggleLock}
                     disabled={!selectedClipId}
-                    className="p-2 text-secondary hover:text-foreground hover:bg-card/50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="rounded-md p-2 text-secondary transition-colors hover:bg-white/5 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
                     title={selectedClip?.locked ? 'Unlock clip' : 'Lock clip'}
                 >
                     {selectedClip?.locked ? <Lock size={18} /> : <Unlock size={18} />}
@@ -220,22 +218,22 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                 {selectedClip?.type === 'audio' && (
                     <button
                         onClick={handleToggleMute}
-                        className="p-2 text-secondary hover:text-foreground hover:bg-card/50 rounded-lg transition-colors"
+                        className="rounded-md p-2 text-secondary transition-colors hover:bg-white/5 hover:text-foreground"
                         title={selectedClip.muted ? 'Unmute' : 'Mute'}
                     >
                         {selectedClip.muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
                     </button>
                 )}
 
-                <div className="w-[1px] h-4 bg-border/20 mx-2" />
+                <div className="mx-2 h-4 w-px bg-primary/10" />
 
                 {onToggleAgent && (
                     <button
                         onClick={onToggleAgent}
-                        className={`p-2 rounded-lg transition-colors ${
+                        className={`rounded-md p-2 transition-colors ${
                             isAgentOpen
-                                ? 'text-primary bg-primary/10'
-                                : 'text-secondary hover:text-foreground hover:bg-card/50'
+                                ? 'border border-primary/25 bg-primary/10 text-primary shadow-[0_0_24px_rgba(139,216,255,0.12)]'
+                                : 'text-secondary hover:bg-white/5 hover:text-foreground'
                         }`}
                         title="Agent editor"
                     >
@@ -244,7 +242,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                 )}
 
                 {/* Import Media */}
-                <label className="p-2 text-secondary hover:text-foreground hover:bg-card/50 rounded-lg transition-colors cursor-pointer" title="Import media file">
+                <label className="cursor-pointer rounded-md p-2 text-secondary transition-colors hover:bg-white/5 hover:text-foreground" title="Import media file">
                     <FilePlus2 size={18} />
                     <input
                         type="file"
@@ -257,7 +255,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                 {/* Aspect Ratio Toggle */}
                 <button
                     onClick={toggleAspectRatio}
-                    className="flex items-center gap-2 px-3 py-1.5 text-secondary hover:text-foreground hover:bg-card/50 rounded-lg transition-colors"
+                    className="ff-control flex items-center gap-2 rounded-md px-3 py-1.5 text-secondary transition-colors hover:text-foreground"
                     title={`Switch to ${exportSettings.aspectRatio === '16:9' ? '9:16' : '16:9'} aspect ratio`}
                 >
                     {exportSettings.aspectRatio === '16:9' ? <Monitor size={18} /> : <Smartphone size={18} />}
@@ -271,7 +269,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                     <button
                         onClick={onSave}
                         disabled={!isDirty || isSaving}
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm text-secondary hover:text-foreground hover:bg-card/50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="ff-control flex items-center gap-2 rounded-md px-3 py-1.5 text-sm text-secondary transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
                         title="Save edits"
                     >
                         <Save size={16} />
@@ -282,7 +280,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                 {onExport && (
                     <button
                         onClick={onExport}
-                        className="flex items-center gap-2 px-4 py-1.5 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
+                        className="flex items-center gap-2 rounded-md bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
                     >
                         <Download size={16} />
                         <span>Export</span>

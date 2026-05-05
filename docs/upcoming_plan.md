@@ -1,4 +1,4 @@
-# Owly Editor: Upcoming Feature Roadmap
+# FrameForge: Upcoming Feature Roadmap
 
 This document outlines the high-priority features identified for the next phases of development, categorized by business value and implementation complexity.
 
@@ -24,7 +24,7 @@ This document outlines the high-priority features identified for the next phases
 ---
 
 ## Phase 3: AI Integration & Workflow
-*Focus: Deeply integrating the editor with the Owly Studio AI engine.*
+*Focus: Deeply integrating agentic planning into the editor workflow.*
 
 ### 1. AI Shot Regeneration
 - **Value**: Extremely High (Unique Differentiator)

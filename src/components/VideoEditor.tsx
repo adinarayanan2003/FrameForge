@@ -2,7 +2,7 @@
  * Video Editor
  * 
  * Main video editor component that integrates all parts.
- * This is the primary export for the owly_editor module.
+ * This is the primary export for the FrameForge module.
  */
 
 'use client'
@@ -241,7 +241,7 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
     }, [handleSave, showToast])
 
     return (
-        <div className={`flex flex-col h-full bg-background ${className}`}>
+        <div className={`relative flex h-full flex-col overflow-hidden bg-background text-foreground ff-grid ${className}`}>
             {/* Toolbar */}
             <EditorToolbar
                 onSave={onSave ? handleSave : undefined}
@@ -255,20 +255,20 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
 
             {/* Error message */}
             {error && (
-                <div className="px-4 py-2 bg-destructive/10 border-b border-destructive/20">
-                    <p className="text-sm text-destructive">{error}</p>
+                <div className="border-b border-destructive/25 bg-destructive/10 px-4 py-2">
+                    <p className="text-sm font-medium text-destructive">{error}</p>
                 </div>
             )}
 
             {/* Main content area */}
-            <div className="flex-1 flex min-h-0">
+            <div className="flex min-h-0 flex-1">
                 {/* Preview */}
-                <div className="flex-1 flex flex-col min-w-0">
+                <div className="flex min-w-0 flex-1 flex-col">
                     <VideoPreview className="flex-1 min-h-0" />
                 </div>
 
                 {/* Properties panel and agent */}
-                <div ref={rightRailRef} className="w-80 shrink-0 border-l border-border/20 bg-card/20 flex flex-col min-h-0">
+                <div ref={rightRailRef} className="flex min-h-0 w-80 shrink-0 flex-col border-l border-primary/10 bg-[#080b10]/90 backdrop-blur">
                     <PropertiesPanel className="min-h-0 flex-1" />
 
                     {isAgentOpen && (
@@ -279,16 +279,16 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
                                 event.preventDefault()
                                 setIsResizingAgentPanel(true)
                             }}
-                            className={`h-2 shrink-0 border-y border-border/20 bg-card/40 hover:bg-card/70 cursor-row-resize ${
-                                isResizingAgentPanel ? 'bg-card/70' : ''
+                            className={`h-2 shrink-0 cursor-row-resize border-y border-primary/10 bg-[#0c1118]/90 hover:bg-[#121925] ${
+                                isResizingAgentPanel ? 'bg-[#121925]' : ''
                             }`}
                         >
-                            <span className="block h-px w-8 mx-auto bg-border/70" />
+                            <span className="mx-auto block h-px w-8 bg-primary/25" />
                         </button>
                     )}
 
                     <div
-                        className="shrink-0 overflow-hidden border-t border-border/20 transition-[height,opacity] duration-200"
+                        className="shrink-0 overflow-hidden border-t border-primary/10 transition-[height,opacity] duration-200"
                         style={{
                             height: isAgentOpen ? agentPanelHeight : 0,
                             opacity: isAgentOpen ? 1 : 0,
@@ -305,11 +305,11 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
 
             {/* Export loading overlay */}
             {isExporting && (
-                <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-                    <div className="text-center">
-                        <div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                        <p className="text-foreground font-medium">Exporting video...</p>
-                        <p className="text-sm text-secondary mt-1">This may take a few minutes</p>
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+                    <div className="ff-panel rounded-lg px-8 py-7 text-center">
+                        <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                        <p className="font-medium text-foreground">Exporting video...</p>
+                        <p className="mt-1 text-sm text-secondary">This may take a few minutes</p>
                     </div>
                 </div>
             )}

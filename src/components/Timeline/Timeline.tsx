@@ -8,6 +8,7 @@
 'use client'
 
 import React, { useRef, useCallback, useEffect } from 'react'
+import { ZoomIn, ZoomOut } from 'lucide-react'
 import { useEditorStore, selectVideoClips, selectAudioClips, selectSubtitleClips, selectTimelineDuration } from '@/store/editorStore'
 import { TimeRuler } from './TimeRuler'
 import { TimelineTrack } from './TimelineTrack'
@@ -92,76 +93,70 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
             id: 'video',
             label: 'Video',
             clips: videoClips,
-            color: 'bg-blue-500/80'
+            color: 'bg-sky-400/70'
         },
         {
             id: 'voiceover',
             label: 'Voiceover',
             clips: audioClips.filter(c => c.trackType === 'voiceover'),
-            color: 'bg-green-500/80'
+            color: 'bg-emerald-400/60'
         },
         {
             id: 'bgm',
             label: 'BGM',
             clips: audioClips.filter(c => c.trackType === 'bgm'),
-            color: 'bg-purple-500/80'
+            color: 'bg-violet-400/60'
         },
         {
             id: 'sfx',
             label: 'SFX',
             clips: audioClips.filter(c => c.trackType === 'sfx' || c.trackType === 'custom' || c.track === 3),
-            color: 'bg-orange-500/80'
+            color: 'bg-amber-400/60'
         },
         {
             id: 'captions',
             label: 'Captions',
             clips: subtitleClips,
-            color: 'bg-yellow-500/80'
+            color: 'bg-yellow-300/60'
         },
         {
             id: 'overlays',
             label: 'Overlays',
             // Filter for overlay clips
             clips: useEditorStore(state => state.clips.filter((c) => c.type === 'overlay')),
-            color: 'bg-pink-500/80'
+            color: 'bg-rose-400/60'
         },
         {
             id: 'proposed',
             label: 'Proposed',
             clips: phantomClips,
-            color: 'bg-red-500/60'
+            color: 'bg-destructive/60'
         },
     ]
 
     return (
         <div
-            className={`flex flex-col bg-card/30 border-t border-border/20 ${className}`}
+            className={`flex flex-col border-t border-primary/10 bg-[#080b10]/95 ${className}`}
             style={{ height: 240 }}
         >
             {/* Timeline header with zoom controls */}
-            <div className="flex items-center justify-between px-4 py-2 border-b border-border/20">
-                <span className="text-xs text-secondary font-medium">Timeline</span>
+            <div className="flex items-center justify-between border-b border-primary/10 px-4 py-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.12em] text-secondary">Timeline</span>
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => useEditorStore.getState().zoomOut()}
-                        className="p-1 text-secondary hover:text-foreground transition-colors"
+                        className="rounded p-1 text-secondary transition-colors hover:bg-white/5 hover:text-foreground"
                         title="Zoom Out"
                     >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="11" cy="11" r="8" />
-                            <path d="M21 21l-4.35-4.35M8 11h6" />
-                        </svg>
+                        <ZoomOut size={16} />
                     </button>
-                    <span className="text-xs text-secondary w-12 text-center">{Math.round(zoom)}px/s</span>
+                    <span className="w-14 rounded border border-primary/10 bg-black/20 px-2 py-0.5 text-center font-mono text-[11px] text-secondary">{Math.round(zoom)}px/s</span>
                     <button
                         onClick={() => useEditorStore.getState().zoomIn()}
-                        className="p-1 text-secondary hover:text-foreground transition-colors"
+                        className="rounded p-1 text-secondary transition-colors hover:bg-white/5 hover:text-foreground"
                         title="Zoom In"
                     >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="11" cy="11" r="8" />
-                            <path d="M21 21l-4.35-4.35M11 8v6M8 11h6" />
-                        </svg>
+                        <ZoomIn size={16} />
                     </button>
                 </div>
             </div>
@@ -169,7 +164,7 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
             {/* Timeline content */}
             <div
                 ref={scrollContainerRef}
-                className="flex-1 overflow-x-auto overflow-y-auto scrollbar-thin"
+                className="flex-1 overflow-x-auto overflow-y-auto"
                 onScroll={handleScroll}
             >
                 <div
@@ -179,7 +174,7 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
                     onClick={handleTimelineClick}
                 >
                     {/* Time ruler (Sticky top, Offset by label width) */}
-                    <div className="sticky top-0 z-20 bg-slate-900/95 ml-24 h-6 border-b border-border/20">
+                    <div className="sticky top-0 z-20 ml-24 h-6 border-b border-primary/10 bg-[#080b10]/95 backdrop-blur">
                         <TimeRuler
                             duration={duration}
                             zoom={zoom}
