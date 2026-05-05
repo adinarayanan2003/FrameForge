@@ -10,6 +10,11 @@ __pycache__/
 dist/
 .next/
 out/
+out.mp4
+render_manifest.json
+
+# User-uploaded local media
+public/uploads/
 
 # Testing
 coverage/
@@ -31,6 +36,12 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Local/private agent and design guidance
+AGENTS.md
+CLAUDE.md
+DESIGN.md
+.agents/
 
 # Vercel
 .vercel

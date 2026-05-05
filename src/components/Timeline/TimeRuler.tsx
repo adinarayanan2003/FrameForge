@@ -51,7 +51,7 @@ export const TimeRuler: React.FC<TimeRulerProps> = ({ duration, zoom, width }) =
 
     return (
         <div
-            className="h-6 border-b border-border/20 relative bg-card/20"
+            className="relative h-6 border-b border-primary/10 bg-[#080b10]/95"
             style={{ width }}
         >
             {ticks.map((tick) => (
@@ -62,11 +62,11 @@ export const TimeRuler: React.FC<TimeRulerProps> = ({ duration, zoom, width }) =
                 >
                     {/* Tick mark */}
                     <div
-                        className={`w-px ${tick.major ? 'h-3 bg-secondary/60' : 'h-2 bg-secondary/30'}`}
+                        className={`w-px ${tick.major ? 'h-3 bg-primary/40' : 'h-2 bg-secondary/25'}`}
                     />
                     {/* Time label (only for major ticks) */}
                     {tick.major && (
-                        <span className="text-[10px] text-secondary/60 mt-0.5 select-none">
+                        <span className="mt-0.5 select-none font-mono text-[10px] text-secondary/60">
                             {formatTime(tick.time)}
                         </span>
                     )}

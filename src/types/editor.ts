@@ -1,12 +1,12 @@
 /**
- * Owly Editor Type Definitions
+ * FrameForge Type Definitions
  * 
  * Core types for the timeline-based video editor.
  * The EditManifest is the JSON output sent to the Remotion render backend.
  */
 
 // ============================================================================
-// SOURCE DATA TYPES (from Owly Studio)
+// SOURCE DATA TYPES (from AI video pipelines)
 // ============================================================================
 
 export interface SourceVideo {
@@ -185,6 +185,8 @@ export interface SubtitleStyle {
     highlightColor?: string
     /** Optional caption animation name */
     animation?: string
+    /** Words that should use highlightColor */
+    highlightWords?: string[]
 }
 
 export interface OverlayPosition {

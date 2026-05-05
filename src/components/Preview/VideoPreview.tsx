@@ -139,8 +139,10 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({ className = '' }) =>
 
     if (!manifest || !source) {
         return (
-            <div className={`flex items-center justify-center bg-black ${className}`}>
-                <div className="text-secondary text-sm">No video loaded</div>
+            <div className={`flex items-center justify-center bg-[#050608] ${className}`}>
+                <div className="rounded-md border border-primary/10 bg-[#080b10]/80 px-4 py-3 text-sm text-secondary">
+                    No video loaded
+                </div>
             </div>
         )
     }
@@ -151,10 +153,11 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({ className = '' }) =>
         : 'aspect-video max-h-full'
 
     return (
-        <div className={`flex flex-col bg-black ${className}`}>
+        <div className={`flex flex-col bg-[#050608]/95 ${className}`}>
             {/* Preview container */}
-            <div className="flex-1 flex items-center justify-center p-4 min-h-0">
-                <div className={`${aspectClass} w-auto h-full max-w-full bg-card/20 rounded-lg overflow-hidden`}>
+            <div className="flex min-h-0 flex-1 items-center justify-center p-5">
+                <div className="flex h-full w-full items-center justify-center rounded-lg border border-primary/10 bg-[radial-gradient(circle_at_center,rgba(139,216,255,0.08),transparent_58%),#050608] p-4 shadow-[inset_0_0_80px_rgba(0,0,0,0.55)]">
+                    <div className={`${aspectClass} h-full w-auto max-w-full overflow-hidden rounded-md border border-white/10 bg-black shadow-[0_24px_80px_rgba(0,0,0,0.65)]`}>
                     <Player
                         ref={playerRef}
                         component={VideoComposition as any}
@@ -169,6 +172,7 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({ className = '' }) =>
                         clickToPlay={false}
                         acknowledgeRemotionLicense={true}
                     />
+                    </div>
                 </div>
             </div>
 

@@ -1,11 +1,11 @@
 /**
- * Owly Video Editor
+ * FrameForge
  * 
  * A modular timeline-based video editor for post-processing AI-generated videos.
  * 
  * @example
  * ```tsx
- * import { VideoEditor } from '@owly/editor'
+ * import { VideoEditor } from 'frameforge-editor'
  * 
  * function EditPage({ video, shots }) {
  *   const handleSave = async (manifest) => {

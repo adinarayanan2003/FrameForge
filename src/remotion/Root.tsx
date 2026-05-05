@@ -5,7 +5,7 @@ import { EditManifest } from '../types/editor';
 export const RemotionRoot: React.FC = () => {
     return (
         <Composition
-            id="OwlyVideoComposition"
+            id="FrameForgeComposition"
             component={VideoComposition as any}
             calculateMetadata={async ({ props }) => {
                 const duration = Math.ceil(props.manifest.timeline.duration * props.manifest.timeline.fps);

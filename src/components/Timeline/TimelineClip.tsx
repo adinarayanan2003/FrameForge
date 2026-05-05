@@ -280,16 +280,16 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
                 return `Shot ${(clip as VideoClip).shotId.split('-').pop()}`
             case 'audio':
                 const audioClip = clip as AudioClip
-                if (audioClip.trackType === 'sfx') return '🔊 SFX'
-                if (audioClip.trackType === 'voiceover') return '🎙️ Voiceover'
-                if (audioClip.trackType === 'bgm') return '🎵 BGM'
-                return audioClip.muted ? '🔇 Audio' : '🔊 Audio'
+                if (audioClip.trackType === 'sfx') return 'SFX'
+                if (audioClip.trackType === 'voiceover') return 'Voiceover'
+                if (audioClip.trackType === 'bgm') return 'BGM'
+                return audioClip.muted ? 'Muted Audio' : 'Audio'
             case 'subtitle':
                 const text = (clip as SubtitleClip).text
                 return text.length > 20 ? text.slice(0, 20) + '...' : text
             case 'overlay':
                 const overlay = clip as any // Cast as any to avoid import cycle if needed, or proper type
-                return overlay.overlayType === 'text' ? '🔤 Text' : '🖼️ Image'
+                return overlay.overlayType === 'text' ? 'Text' : 'Image'
             default:
                 return 'Clip'
         }
@@ -298,19 +298,20 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
     return (
         <div
             className={`
-        absolute top-1 bottom-1 rounded-md overflow-hidden cursor-pointer
-        transition-shadow duration-150
-        ${color}
-        ${isSelected ? 'ring-2 ring-white/80 shadow-lg' : 'hover:ring-1 hover:ring-white/40'}
-        ${isDragging || isTrimming ? 'opacity-80' : ''}
-        ${clip.locked ? 'opacity-50 cursor-not-allowed' : ''}
-      `}
+                absolute bottom-1 top-1 cursor-pointer overflow-hidden rounded-md border border-white/[0.12]
+                shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_8px_22px_rgba(0,0,0,0.22)]
+                transition-[box-shadow,opacity,transform] duration-150
+                ${color}
+                ${isSelected ? 'ring-2 ring-primary shadow-[0_0_0_1px_rgba(139,216,255,0.24),0_0_28px_rgba(139,216,255,0.18)]' : 'hover:ring-1 hover:ring-primary/50'}
+                ${isDragging || isTrimming ? 'opacity-80' : ''}
+                ${clip.locked ? 'cursor-not-allowed opacity-50' : ''}
+            `}
             style={{ left, width: Math.max(width, minWidth) }}
             onClick={handleClick}
             onMouseDown={handleDragStart}
         >
             {/* Clip content */}
-            <div className="h-full px-2 py-1 flex flex-col justify-center overflow-hidden relative">
+            <div className="relative flex h-full flex-col justify-center overflow-hidden bg-black/[0.12] px-2 py-1">
                 {/* Waveform background for audio clips */}
                 {clip.type === 'audio' && width > 40 && (
                     <div className="absolute inset-0 flex items-center justify-center opacity-60">
@@ -321,11 +322,11 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
                         />
                     </div>
                 )}
-                <span className="text-[11px] font-medium text-white truncate drop-shadow-sm z-10">
+                <span className="z-10 truncate text-[11px] font-semibold text-white drop-shadow-sm">
                     {getClipLabel()}
                 </span>
                 {clip.type === 'video' && width > 60 && (
-                    <span className="text-[9px] text-white/70 truncate z-10">
+                    <span className="z-10 truncate font-mono text-[9px] text-white/70">
                         {formatDuration(clip.timelineEnd - clip.timelineStart)}
                     </span>
                 )}
@@ -337,25 +338,25 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
                     {/* Left trim handle */}
                     <div
                         className={`
-              absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize
-              bg-white/0 hover:bg-white/30 transition-colors
-              ${isTrimming === 'start' ? 'bg-white/40' : ''}
-            `}
+                            absolute bottom-0 left-0 top-0 w-2 cursor-ew-resize
+                            bg-white/0 transition-colors hover:bg-white/30
+                            ${isTrimming === 'start' ? 'bg-white/40' : ''}
+                        `}
                         onMouseDown={handleTrimStart('start')}
                     >
-                        <div className="absolute left-0.5 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-white/60 rounded-full" />
+                        <div className="absolute left-0.5 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-white/70" />
                     </div>
 
                     {/* Right trim handle */}
                     <div
                         className={`
-              absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize
-              bg-white/0 hover:bg-white/30 transition-colors
-              ${isTrimming === 'end' ? 'bg-white/40' : ''}
-            `}
+                            absolute bottom-0 right-0 top-0 w-2 cursor-ew-resize
+                            bg-white/0 transition-colors hover:bg-white/30
+                            ${isTrimming === 'end' ? 'bg-white/40' : ''}
+                        `}
                         onMouseDown={handleTrimStart('end')}
                     >
-                        <div className="absolute right-0.5 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-white/60 rounded-full" />
+                        <div className="absolute right-0.5 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-white/70" />
                     </div>
                 </>
             )}

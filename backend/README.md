@@ -1,4 +1,4 @@
-# Owly Agent Backend
+# FrameForge Agent Backend
 
 Standalone Flask service for the agentic video editor.
 
@@ -20,7 +20,8 @@ brew install ffmpeg
 ## Environment
 
 ```bash
-GEMINI_API_KEY=...
+OPENAI_API_KEY=...
+OPENAI_MODEL=gpt-5.2
 API_KEY=optional-shared-secret
 PORT=5001
 ```

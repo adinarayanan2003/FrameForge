@@ -8,6 +8,7 @@ from agentic_editor.context.session_store import session_store
 from agentic_editor.context.asset_fetcher import AssetFetcher
 from agentic_editor.perception.visual_eye import VisualEye
 from agentic_editor.tools.validator import validator, ValidationResult
+from agentic_editor.llm import openai_text_response
 
 logger = logging.getLogger(__name__)
 
@@ -103,9 +104,6 @@ class BaseAgent:
         Analyze request and context to determine actions.
         For BaseAgent (general), we chat with the user based on the context.
         """
-        import google.generativeai as genai
-        import os
-        
         request = state["request"]
         context = state.get("context")
         history = state.get("conversation_history", [])
@@ -114,184 +112,110 @@ class BaseAgent:
         # 1. If analysis requested, look at context summary
         # 2. If general chat, just chat
         
-        # Setup model
-        api_key = os.environ.get("GEMINI_API_KEY")
-        if api_key:
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-3-flash-preview')
-            
-            # Extract request context
-            req_ctx = request.context or {}
-            selected_clip_id = req_ctx.get("selectedClipId")
-            selected_clip_ids = req_ctx.get("selectedClipIds", [])
-            if selected_clip_id and selected_clip_id not in selected_clip_ids:
-                selected_clip_ids.append(selected_clip_id)
-            
-            playhead = req_ctx.get("playheadPosition", 0)
-            
-            # Format clip list for LLM
-            clips_info = []
-            if state["manifest"] and state["manifest"].clips:
-                for c in state["manifest"].clips:
-                    c_id = c.get("id")
-                    start = c.get("timelineStart", 0)
-                    end = c.get("timelineEnd", 0)
-                    
-                    # Check selection
-                    is_sel = ""
-                    if c_id in selected_clip_ids:
-                        is_sel = "(SELECTED)"
-                    
-                    if c.get("type") == "video":
-                        clips_info.append(f"- Clip '{c_id}' {is_sel}: {start:.2f}s - {end:.2f}s (Duration: {end-start:.2f}s)")
-            
-            clips_str = "\n".join(clips_info[:30]) # Increased limit slightly
-            
-            # Construct prompt
-            system_instruction = """
-            You are an expert AI Video Editor.
-            You can perform the following actions locally on the timeline:
-            
-            1. TRIM_CLIP: Trim a clip's SOURCE window.
-               - startTime: New source start (seconds in source media)
-               - endTime: New source end (seconds in source media)
-               - The clip keeps its current timelineStart.
-               - Resulting timeline duration = endTime - startTime.
-               
-               SEMANTIC RULES:
-               - "trim out the first X seconds" = REMOVE the first X seconds, keep the rest
-                 → If source window is 0-6s and you trim out first 3s, keep source 3-6s
-                 → Set startTime=3, endTime=6
-               - "trim/cut the last X seconds" = REMOVE the last X seconds
-                 → If source window is 0-6s and you trim out last 3s, keep source 0-3s
-                 → Set startTime=original_start, endTime=original_end-X
-               - "shorten by X seconds" = remove X seconds from the end
-               
-            2. SPLIT_CLIP: Cut a clip into two at a timeline timestamp.
-               Use this for "split here", "cut at playhead".
-               Required: {"actionType": "split", "clipId": "...", "startTime": float}
-               
-            3. DELETE_CLIP: Remove a clip from the timeline.
-               Required: {"actionType": "delete", "clipId": "..."}
-               
-            4. MOVE_PLAYHEAD: Jump to a time on timeline.
-               Required: {"actionType": "move_playhead", "startTime": float}
+        req_ctx = request.context or {}
+        selected_clip_id = req_ctx.get("selectedClipId")
+        selected_clip_ids = req_ctx.get("selectedClipIds", [])
+        if selected_clip_id and selected_clip_id not in selected_clip_ids:
+            selected_clip_ids.append(selected_clip_id)
 
-            5. ADD_CAPTION: Add subtitles or text overlay.
-               Required: {"actionType": "add_caption", "text": "...", "startTime": float, "endTime": float}
-               
-            6. ADD_TRANSITION: Add a transition effect BETWEEN two clips.
-                The transition duration is SPLIT between both clips (half at end of clip A, half at start of clip B).
-                - clipId: The OUTGOING clip (the clip the transition starts from)
-                - beforeClipId: (optional) The INCOMING clip. If not provided, will auto-detect the next clip on timeline.
-                Valid types: "fade", "dissolve", "wipe", "slide"
-                Default duration: 0.5 seconds (0.25s for each clip)
-                
-                TIP: Suggest adding transitions between clips for a more polished look!
-                - "fade" is good for dramatic transitions
-                - "dissolve" is smooth for any type of cut
-                - "wipe" and "slide" work well for movement
-                Example: {"actionType": "add_transition", "clipId": "shot_1", "beforeClipId": "shot_2", "transitionType": "fade", "duration": 0.5}
+        playhead = req_ctx.get("playheadPosition", 0)
 
-            CRITICAL: You MUST return a valid JSON object with "reasoning" (string) and "actions" (list).
-            
-            IMPORTANT: 
-            - If user asks to trim with negative time or impossible values, reject with an error in reasoning.
-            - Always validate: endTime must be greater than startTime.
-            
-            Example 1: "trim out the first 3 seconds of clip with source 0-6s"
-            - User wants to REMOVE first 3s (keep 3-6s content)
-            - { "actionType": "trim", "clipId": "X", "startTime": 3.0, "endTime": 6.0 }
-            
-            Example 2: "trim out the last 2 seconds of clip at 10-16s"
-            - User wants to REMOVE last 2s (keep 10-14s content)  
-            - New timeline should be 10-14s
-            - { "actionType": "trim", "clipId": "X", "startTime": 10.0, "endTime": 14.0 }
-            """
-            
-            context_str = "No rich context available."
-            if context:
-                visuals = context.visual_summary if context.visual_summary else "No visual analysis available."
-                context_str = f"""
-                Visual Analysis:
-                {visuals}
-                """
-                
-            # Format history
-            history_str = ""
-            if history:
-                # Filter out the very last user message which is likely the current one (already in request.prompt)
-                # But typically session_store adds it before calling this.
-                # Let's just include the last few turns
-                recent = history[-10:] 
-                history_lines = []
-                for msg in recent:
-                    role = msg.get("role", "unknown").upper()
-                    content = msg.get("content", "")
-                    history_lines.append(f"{role}: {content}")
-                history_str = "\n".join(history_lines)
+        clips_info = []
+        if state["manifest"] and state["manifest"].clips:
+            for c in state["manifest"].clips:
+                c_id = c.get("id")
+                start = c.get("timelineStart", 0)
+                end = c.get("timelineEnd", 0)
+                is_sel = "(SELECTED)" if c_id in selected_clip_ids else ""
+                if c.get("type") == "video":
+                    clips_info.append(f"- Clip '{c_id}' {is_sel}: {start:.2f}s - {end:.2f}s (Duration: {end-start:.2f}s)")
 
-            prompt = f"""
-            {system_instruction}
-            
-            CURRENT STATE:
-            - Playhead Position: {playhead}s
-            - Selected Clip: {selected_clip_id or "None"}
-            - Clips on Timeline:
-            {clips_str}
-            
-            RICH CONTEXT:
-            {context_str}
+        clips_str = "\n".join(clips_info[:30])
 
-            CONVERSATION HISTORY:
-            {history_str}
-            
-            USER PROMPT: "{request.prompt}"
-            
-            TIP: Consider adding transitions (fade/dissolve/wipe/slide) between clips for a more professional look!
-            
-            Return JSON only.
-            """
-            
-            try:
-                # Force JSON response
-                response = model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})
-                
-                import json
-                parsed = json.loads(response.text)
-                
-                # Convert raw dicts to AgentAction models
-                actions = []
-                for act in parsed.get("actions", []):
-                    # Ensure compatibility with Pydantic model
-                    # The LLM might output snake_case or camelCase, we need to be careful.
-                    # Our AgentAction expects camelCase 'actionType'.
-                    if "action_type" in act: act["actionType"] = act.pop("action_type")
-                    if "clip_id" in act: act["clipId"] = act.pop("clip_id")
-                    if "start_time" in act: act["startTime"] = act.pop("start_time")
-                    if "end_time" in act: act["endTime"] = act.pop("end_time")
-                    
-                    try:
-                        actions.append(AgentAction(**act))
-                    except Exception as e:
-                        logger.warning(f"Failed to parse action {act}: {e}")
+        system_instruction = """
+        You are an expert AI Video Editor.
+        Return a valid JSON object with "reasoning" (string) and "actions" (list).
+        Supported action objects:
+        - {"actionType": "trim", "clipId": "...", "startTime": float, "endTime": float}
+        - {"actionType": "split", "clipId": "...", "startTime": float}
+        - {"actionType": "delete", "clipId": "..."}
+        - {"actionType": "move_playhead", "startTime": float}
+        - {"actionType": "add_caption", "text": "...", "startTime": float, "endTime": float}
+        - {"actionType": "add_transition", "clipId": "...", "beforeClipId": "...", "transitionType": "fade|dissolve|wipe|slide", "duration": float}
 
-                return {
-                    "reasoning": parsed.get("reasoning", "Processed request."),
-                    "actions": actions
-                }
-            except Exception as e:
-                logger.error(f"LLM generation failed: {e}")
-                return {
-                    "reasoning": f"I tried to process that but failed: {str(e)}",
-                    "actions": []
-                }
-        
-        return {
-            "reasoning": "I am the Base Agent. I see you, but I have no brain (LLM not configured).",
-            "actions": []
-        }
+        For trim requests, startTime/endTime describe the source window to keep.
+        If values are impossible, return no actions and explain the issue in reasoning.
+        Return JSON only, with no markdown.
+        """
 
+        context_str = "No rich context available."
+        if context:
+            visuals = context.visual_summary if context.visual_summary else "No visual analysis available."
+            context_str = f"Visual Analysis:\n{visuals}"
+
+        history_str = ""
+        if history:
+            recent = history[-10:]
+            history_str = "\n".join([
+                f"{msg.get('role', 'unknown').upper()}: {msg.get('content', '')}"
+                for msg in recent
+            ])
+
+        prompt = f"""
+        CURRENT STATE:
+        - Playhead Position: {playhead}s
+        - Selected Clip: {selected_clip_id or "None"}
+        - Clips on Timeline:
+        {clips_str}
+
+        RICH CONTEXT:
+        {context_str}
+
+        CONVERSATION HISTORY:
+        {history_str}
+
+        USER PROMPT: "{request.prompt}"
+        """
+
+        response_text = openai_text_response(prompt, instructions=system_instruction)
+        if response_text is None:
+            return {
+                "reasoning": "I am the Base Agent. I see you, but I have no brain (OpenAI API key not configured).",
+                "actions": []
+            }
+
+        try:
+            import json
+            import re
+
+            cleaned = response_text.strip()
+            fence_match = re.search(r"```(?:json)?\s*(.*?)```", cleaned, re.DOTALL)
+            if fence_match:
+                cleaned = fence_match.group(1).strip()
+
+            parsed = json.loads(cleaned)
+            actions = []
+            for act in parsed.get("actions", []):
+                if "action_type" in act: act["actionType"] = act.pop("action_type")
+                if "clip_id" in act: act["clipId"] = act.pop("clip_id")
+                if "start_time" in act: act["startTime"] = act.pop("start_time")
+                if "end_time" in act: act["endTime"] = act.pop("end_time")
+
+                try:
+                    actions.append(AgentAction(**act))
+                except Exception as e:
+                    logger.warning(f"Failed to parse action {act}: {e}")
+
+            return {
+                "reasoning": parsed.get("reasoning", "Processed request."),
+                "actions": actions
+            }
+        except Exception as e:
+            logger.error(f"OpenAI response parsing failed: {e}")
+            return {
+                "reasoning": f"I tried to process that but failed to parse the model response: {str(e)}",
+                "actions": []
+            }
     async def execute_node(self, state: AgentState) -> Dict[str, Any]:
         """
         Validate actions before returning.

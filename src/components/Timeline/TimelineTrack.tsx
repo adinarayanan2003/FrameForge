@@ -30,20 +30,20 @@ export const TimelineTrack: React.FC<TimelineTrackProps> = ({
 }) => {
     return (
         <div
-            className="h-12 relative border-b border-border/10 flex items-center"
+            className="relative flex h-12 items-center border-b border-primary/10"
             data-track-id={trackId}
         >
             {/* Sticky Track Label */}
-            <div className="sticky left-0 z-10 w-24 h-full flex items-center px-3 bg-slate-900/95 backdrop-blur-sm border-r border-border/20 text-xs text-secondary font-medium shrink-0">
-                {label}
+            <div className="sticky left-0 z-10 flex h-full w-24 shrink-0 items-center border-r border-primary/10 bg-[#080b10]/95 px-3 text-xs font-medium text-secondary backdrop-blur">
+                <span className="truncate">{label}</span>
             </div>
 
             {/* Track background grid */}
             <div
-                className="absolute inset-0 opacity-5"
+                className="absolute inset-0 opacity-[0.12]"
                 style={{
                     left: 96, // Offset by label width (w-24 = 96px)
-                    backgroundImage: `linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px)`,
+                    backgroundImage: `linear-gradient(to right, rgba(139, 216, 255, 0.18) 1px, transparent 1px)`,
                     backgroundSize: `${zoom}px 100%`,
                 }}
             />

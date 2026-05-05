@@ -1,34 +1,25 @@
 import logging
-import os
-import google.generativeai as genai
 from typing import List, Dict, Optional, Any
 from agentic_editor.context.manifest_context import ManifestContext
+from agentic_editor.llm import openai_text_response
 
 logger = logging.getLogger(__name__)
-
-# Configure API key
-api_key = os.environ.get("GEMINI_API_KEY")
-if api_key:
-    genai.configure(api_key=api_key)
 
 
 class IntentRouter:
     """
-    Routes user prompts to the appropriate specialized agent using Gemini 3 Flash.
+    Routes user prompts to the appropriate specialized agent using OpenAI.
     Now enhanced with contextual awareness (timeline selection).
     """
-    def __init__(self, model_name: str = "gemini-3-flash-preview"):
-        self.model_name = model_name
-        self._model = None
-
-    def _get_model(self):
-        if self._model is None:
-            try:
-                self._model = genai.GenerativeModel(self.model_name)
-            except Exception:
-                logger.warning(f"Model {self.model_name} not found, falling back to gemini-3-flash-preview")
-                self._model = genai.GenerativeModel("gemini-3-flash-preview")
-        return self._model
+    def _fallback_route(self, prompt: str) -> str:
+        p = prompt.lower()
+        if "silence" in p or "clean" in p:
+            return "cleanup"
+        if "caption" in p or "subtitle" in p or "hormozi" in p or "text" in p:
+            return "caption"
+        if "b-roll" in p or "stock" in p:
+            return "broll"
+        return "general"
 
     async def route(
         self, 
@@ -51,8 +42,6 @@ class IntentRouter:
                 - selectedClipTypes: Types of selected clips (e.g., 'video', 'audio', 'text')
                 - playheadPosition: Current playhead time
         """
-        model = self._get_model()
-        
         # Build selection context string
         selection_info = ""
         if selection_context:
@@ -118,8 +107,12 @@ IMPORTANT: Use this context to help route the request:
         """
 
         try:
-            response = model.generate_content([system_prompt, user_message])
-            agent_id = response.text.strip().lower()
+            agent_text = openai_text_response(user_message, instructions=system_prompt)
+            if agent_text is None:
+                logger.warning("OPENAI_API_KEY is not configured. Routing with keyword fallback.")
+                return self._fallback_route(prompt)
+
+            agent_id = agent_text.strip().lower()
             
             # Smart Overrides: If LLM is conservative and says "general", check for strong signals
             if agent_id == "general":
@@ -144,8 +137,4 @@ IMPORTANT: Use this context to help route the request:
 
         except Exception as e:
             logger.error(f"Intent routing failed: {e}")
-            # Fallback to simple keyword matching
-            p = prompt.lower()
-            if "silence" in p or "clean" in p: return "cleanup"
-            if "caption" in p or "subtitle" in p or "hormozi" in p: return "caption"
-            return "general"
+            return self._fallback_route(prompt)

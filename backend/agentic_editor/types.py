@@ -79,6 +79,7 @@ class SubtitleStyle(BaseModel):
     italic: bool = False
     shadow: bool = True
     animation: str = "pop_in"
+    highlightWords: List[str] = []
 
 
 

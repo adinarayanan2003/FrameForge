@@ -6,7 +6,8 @@
 
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
+import { ArrowRight, Cpu, Film, Link2, Loader2, UploadCloud, X } from 'lucide-react'
 import { VideoEditor } from '@/components/VideoEditor'
 import { SourceVideo, SourceShot, EditManifest } from '@/types/editor'
 
@@ -71,7 +72,7 @@ export default function DemoPage() {
     }
 
     // Generate dynamic shots based on loaded metadata
-    const dynamicShots: SourceShot[] = React.useMemo(() => {
+    const dynamicShots: SourceShot[] = useMemo(() => {
         if (!metadata.duration) return []
         return [
             {
@@ -124,7 +125,7 @@ export default function DemoPage() {
             // Create a temporary link and click it
             const a = document.createElement('a')
             a.href = url
-            a.download = `owly-edit-${manifest.jobId}.mp4`
+            a.download = `frameforge-edit-${manifest.jobId}.mp4`
             document.body.appendChild(a)
             a.click()
 
@@ -222,13 +223,30 @@ export default function DemoPage() {
 
     if (!isStarted) {
         return (
-            <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-                <div className="max-w-md w-full bg-slate-800 p-8 rounded-xl shadow-2xl border border-slate-700">
-                    <h1 className="text-2xl font-bold text-white mb-6">Owly Editor Demo</h1>
+            <div className="min-h-screen bg-background ff-grid flex items-center justify-center p-4 text-foreground">
+                <div className="w-full max-w-[560px] ff-panel rounded-lg p-6">
+                    <div className="mb-6 flex items-start justify-between gap-4">
+                        <div>
+                            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
+                                <Cpu size={13} />
+                                Agentic browser studio
+                            </div>
+                            <h1 className="text-[32px] font-semibold leading-tight text-foreground">
+                                FrameForge
+                            </h1>
+                            <p className="mt-2 max-w-[440px] text-sm leading-6 text-secondary">
+                                Load a source video, inspect the timeline, and hand off precise edits to the agent without leaving the browser.
+                            </p>
+                        </div>
+                        <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 text-primary sm:flex">
+                            <Film size={22} />
+                        </div>
+                    </div>
 
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1">
+                            <label className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-secondary">
+                                <Link2 size={13} />
                                 Video URL
                             </label>
                             <div className="relative">
@@ -236,18 +254,16 @@ export default function DemoPage() {
                                     type="text"
                                     value={videoUrl}
                                     onChange={(e) => setVideoUrl(e.target.value)}
-                                    className="w-full bg-slate-950 border border-slate-700 rounded-lg pl-4 pr-10 py-2 text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    className="w-full rounded-md border border-primary/20 bg-[#050608]/80 py-3 pl-4 pr-10 text-sm text-foreground placeholder:text-secondary/50 outline-none transition-colors focus:border-primary/60"
                                     placeholder="https://..."
                                 />
                                 {videoUrl && (
                                     <button
                                         onClick={() => setVideoUrl('')}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-secondary hover:bg-white/5 hover:text-foreground"
                                         title="Clear"
                                     >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
+                                        <X size={16} />
                                     </button>
                                 )}
                             </div>
@@ -255,14 +271,18 @@ export default function DemoPage() {
 
                         {/* Local File Upload */}
                         <div className="relative">
-                            <div className="text-center text-slate-500 text-xs my-2">— or —</div>
+                            <div className="my-3 flex items-center gap-3 text-[11px] uppercase tracking-[0.16em] text-secondary/70">
+                                <span className="h-px flex-1 bg-primary/10" />
+                                <span>or</span>
+                                <span className="h-px flex-1 bg-primary/10" />
+                            </div>
                             <label
-                                className="block w-full border-2 border-dashed border-slate-600 hover:border-indigo-500 rounded-lg p-6 cursor-pointer transition-colors text-center"
-                                onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-indigo-500') }}
-                                onDragLeave={(e) => { e.currentTarget.classList.remove('border-indigo-500') }}
+                                className="group block w-full cursor-pointer rounded-lg border border-dashed border-primary/20 bg-[#080b10]/70 p-6 text-center transition-colors hover:border-primary/50 hover:bg-[#0c1118]/90"
+                                onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-primary/50') }}
+                                onDragLeave={(e) => { e.currentTarget.classList.remove('border-primary/50') }}
                                 onDrop={(e) => {
                                     e.preventDefault()
-                                    e.currentTarget.classList.remove('border-indigo-500')
+                                    e.currentTarget.classList.remove('border-primary/50')
                                     const file = e.dataTransfer.files[0]
                                     handleFileSelect(file)
                                 }}
@@ -276,48 +296,52 @@ export default function DemoPage() {
                                         if (file) handleFileSelect(file)
                                     }}
                                 />
-                                <svg className="w-8 h-8 mx-auto text-slate-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                </svg>
-                                <span className="text-sm text-slate-400">
-                                    Drag & drop a video file, or <span className="text-indigo-400 underline">browse</span>
+                                <UploadCloud className="mx-auto mb-3 text-secondary transition-colors group-hover:text-primary" size={32} />
+                                <span className="text-sm text-secondary">
+                                    Drag a video file here, or <span className="text-primary">browse media</span>
                                 </span>
                             </label>
                             {videoUrl.startsWith('blob:') && (
-                                <p className="text-xs text-green-400 mt-2 text-center">✓ Local file loaded</p>
+                                <p className="mt-2 text-center text-xs text-accent">Local file loaded</p>
                             )}
-                            {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+                            {error && <p className="mt-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
                         </div>
 
                         <button
                             onClick={handleLaunch}
                             disabled={isLoading || !videoUrl}
-                            className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+                            className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             {isLoading ? (
-                                <span>Loading Metadata...</span>
+                                <>
+                                    <Loader2 className="animate-spin" size={17} />
+                                    <span>Loading metadata</span>
+                                </>
                             ) : (
                                 <>
                                     <span>Launch Editor</span>
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                    </svg>
+                                    <ArrowRight size={17} />
                                 </>
                             )}
                         </button>
 
-                        <div className="pt-4 border-t border-slate-700">
-                            <p className="text-sm text-slate-400 mb-2">Preset Examples:</p>
-                            <div className="flex gap-2">
+                        <div className="border-t border-primary/10 pt-4">
+                            <div className="mb-3 flex items-center justify-between">
+                                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-secondary">Preset Sources</p>
+                                <span className="rounded-full border border-accent/20 bg-accent/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-accent">
+                                    ready
+                                </span>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
                                 <button
                                     onClick={() => setVideoUrl('https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4')}
-                                    className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-xs text-white rounded"
+                                    className="ff-control rounded-md px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:text-foreground"
                                 >
                                     Big Buck Bunny
                                 </button>
                                 <button
                                     onClick={() => setVideoUrl('https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4')}
-                                    className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-xs text-white rounded"
+                                    className="ff-control rounded-md px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:text-foreground"
                                 >
                                     Tears of Steel
                                 </button>

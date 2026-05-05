@@ -161,8 +161,19 @@ export const useAgentActionHandler = () => {
                 if (!action.text || action.startTime === undefined || action.endTime === undefined) {
                     throw new Error('Add caption action is missing text, startTime, or endTime')
                 }
-                const style = action.style as SubtitleStyle | undefined
-                const newId = addCaptionClip(action.text, action.startTime, action.endTime, style)
+                const legacyHighlights = Array.from(action.text.matchAll(/\*([^*]+)\*/g))
+                    .map((match) => match[1].trim())
+                    .filter(Boolean)
+                const cleanText = action.text.replace(/\*/g, '').replace(/\s+/g, ' ').trim()
+                const style = action.style
+                    ? ({
+                        ...action.style,
+                        highlightWords: action.style.highlightWords?.length
+                            ? action.style.highlightWords
+                            : legacyHighlights,
+                    } as SubtitleStyle)
+                    : undefined
+                const newId = addCaptionClip(cleanText, action.startTime, action.endTime, style)
                 selectClip(newId, selectionMode)
                 break
             }

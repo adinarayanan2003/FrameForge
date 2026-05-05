@@ -341,14 +341,14 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({ isOpen, onClos
     if (!isOpen) return null
 
     return (
-        <div className="flex h-full flex-col bg-card text-foreground">
-            <div className="flex items-center justify-between border-b border-border/20 px-3 py-2">
+        <div className="flex h-full flex-col bg-[#080b10] text-foreground">
+            <div className="flex items-center justify-between border-b border-primary/10 px-3 py-2">
                 <div className="flex items-center gap-2">
                     <Sparkles size={16} className="text-primary" />
-                    <span className="text-sm font-medium">Agent Editor</span>
+                    <span className="text-sm font-semibold">Agent Editor</span>
                 </div>
                 {onClose && (
-                    <button onClick={onClose} className="rounded-md p-1 text-secondary hover:bg-card/60 hover:text-foreground">
+                    <button onClick={onClose} className="rounded-md p-1 text-secondary hover:bg-white/5 hover:text-foreground">
                         <X size={16} />
                     </button>
                 )}
@@ -360,7 +360,7 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({ isOpen, onClos
                         <div className={`inline-block max-w-[92%] rounded-md px-3 py-2 text-sm ${
                             message.role === 'user'
                                 ? 'bg-primary text-primary-foreground'
-                                : 'bg-background/70 text-foreground'
+                                : 'border border-primary/10 bg-[#0c1118]/90 text-foreground'
                         }`}>
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
                         </div>
@@ -368,7 +368,7 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({ isOpen, onClos
                 ))}
 
                 {currentStatus && (
-                    <div className="flex items-center gap-2 rounded-md border border-border/20 bg-background/50 px-3 py-2 text-xs text-secondary">
+                    <div className="flex items-center gap-2 rounded-md border border-primary/10 bg-[#0c1118]/80 px-3 py-2 text-xs text-secondary">
                         {currentStatus === AgentStatus.ERROR ? <AlertCircle size={14} /> : <Loader2 size={14} className="animate-spin" />}
                         <span>{currentStatus.replace(/_/g, ' ')}</span>
                     </div>
@@ -381,15 +381,15 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({ isOpen, onClos
                 )}
 
                 {actionPlan.length > 0 && (
-                    <div className="space-y-2 rounded-md border border-border/20 bg-background/40 p-2">
+                    <div className="space-y-2 rounded-md border border-primary/10 bg-[#050608]/60 p-2">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-secondary">Planned Edits</span>
+                            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-secondary">Planned Edits</span>
                             <span className="text-[11px] text-secondary">{actionPlan.length} action{actionPlan.length === 1 ? '' : 's'}</span>
                         </div>
 
                         <div className="max-h-44 space-y-2 overflow-y-auto">
                             {actionPlan.map((item, index) => (
-                                <div key={`${index}-${item.title}`} className="rounded-md bg-card/60 p-2 text-xs">
+                                <div key={`${index}-${item.title}`} className="rounded-md border border-primary/10 bg-[#0c1118]/80 p-2 text-xs">
                                     <div className="flex items-center justify-between gap-2">
                                         <span className="font-medium text-foreground">{item.title}</span>
                                         {item.warnings.length ? (
@@ -408,14 +408,14 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({ isOpen, onClos
                         </div>
 
                         <div className="grid grid-cols-3 gap-2">
-                            <button onClick={applyNext} className="rounded-md border border-border/20 px-2 py-1.5 text-xs hover:bg-card/70">
+                            <button onClick={applyNext} className="ff-control rounded-md px-2 py-1.5 text-xs hover:text-foreground">
                                 Apply Step
                             </button>
-                            <button onClick={applyAll} className="rounded-md bg-primary px-2 py-1.5 text-xs text-primary-foreground hover:opacity-90">
+                            <button onClick={applyAll} className="rounded-md bg-primary px-2 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90">
                                 <Check size={13} className="mr-1 inline" />
                                 Apply All
                             </button>
-                            <button onClick={rejectPlan} className="rounded-md border border-border/20 px-2 py-1.5 text-xs hover:bg-card/70">
+                            <button onClick={rejectPlan} className="ff-control rounded-md px-2 py-1.5 text-xs hover:text-foreground">
                                 <Trash2 size={13} className="mr-1 inline" />
                                 Reject
                             </button>
@@ -424,12 +424,12 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({ isOpen, onClos
                 )}
             </div>
 
-            <form onSubmit={submitPrompt} className="flex gap-2 border-t border-border/20 p-2">
+            <form onSubmit={submitPrompt} className="flex gap-2 border-t border-primary/10 p-2">
                 <input
                     value={prompt}
                     onChange={(event) => setPrompt(event.target.value)}
                     placeholder="Ask for an edit..."
-                    className="min-w-0 flex-1 rounded-md border border-border/20 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                    className="min-w-0 flex-1 rounded-md border border-primary/10 bg-[#050608] px-3 py-2 text-sm text-foreground outline-none placeholder:text-secondary/50 focus:border-primary/60"
                     disabled={isProcessing}
                 />
                 <button

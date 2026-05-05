@@ -1,6 +1,6 @@
-# Owly Editor: Production Deployment Plan
+# FrameForge: Production Deployment Plan
 
-This document outlines the strategy for integrating the **Owly Editor** into the Owly Studio production ecosystem.
+This document outlines the strategy for deploying **FrameForge** as a production video editing surface.
 
 ## Primary Rendering Strategy: Google Cloud Run (Option B)
 
@@ -24,7 +24,7 @@ npm install @remotion/cloudrun
 npx remotion cloudrun services deploy --region=us-central1
 
 # Upload the editor project code as a "Site" to GCS
-npx remotion cloudrun sites create src/index.ts --site-name=owly-editor-v1
+npx remotion cloudrun sites create src/index.ts --site-name=frameforge-editor-v1
 ```
 
 #### 2. Connect from Main App (Vercel)

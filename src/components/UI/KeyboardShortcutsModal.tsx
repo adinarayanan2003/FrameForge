@@ -72,38 +72,38 @@ export const KeyboardShortcutsModal: React.FC = () => {
     if (!isOpen) return null
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+            <div className="ff-panel max-h-[80vh] w-full max-w-lg overflow-hidden rounded-lg">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
+                <div className="flex items-center justify-between border-b border-primary/10 px-6 py-4">
                     <div className="flex items-center gap-3">
                         <Keyboard className="text-primary" size={20} />
-                        <h2 className="text-lg font-semibold text-white">Keyboard Shortcuts</h2>
+                        <h2 className="text-lg font-semibold text-foreground">Keyboard Shortcuts</h2>
                     </div>
                     <button
                         onClick={() => setIsOpen(false)}
-                        className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                        className="rounded-md p-2 text-secondary transition-colors hover:bg-white/5 hover:text-foreground"
                     >
                         <X size={18} />
                     </button>
                 </div>
 
                 {/* Content */}
-                <div className="p-6 overflow-y-auto max-h-[60vh] space-y-6">
+                <div className="max-h-[60vh] space-y-6 overflow-y-auto p-6">
                     {shortcuts.map((section) => (
                         <div key={section.category}>
-                            <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">
+                            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-secondary">
                                 {section.category}
                             </h3>
                             <div className="space-y-2">
                                 {section.items.map((shortcut, idx) => (
                                     <div key={idx} className="flex items-center justify-between py-1.5">
-                                        <span className="text-sm text-slate-300">{shortcut.description}</span>
+                                        <span className="text-sm text-foreground">{shortcut.description}</span>
                                         <div className="flex items-center gap-1">
                                             {shortcut.keys.map((key, keyIdx) => (
                                                 <React.Fragment key={keyIdx}>
-                                                    {keyIdx > 0 && <span className="text-slate-500 text-xs">+</span>}
-                                                    <kbd className="px-2 py-1 text-xs font-mono bg-slate-800 border border-slate-600 rounded text-slate-200">
+                                                    {keyIdx > 0 && <span className="text-xs text-secondary/60">+</span>}
+                                                    <kbd className="rounded border border-primary/10 bg-[#050608] px-2 py-1 font-mono text-xs text-secondary">
                                                         {key}
                                                     </kbd>
                                                 </React.Fragment>
@@ -117,9 +117,9 @@ export const KeyboardShortcutsModal: React.FC = () => {
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-3 border-t border-slate-700 bg-slate-800/50">
-                    <p className="text-xs text-slate-500 text-center">
-                        Press <kbd className="px-1.5 py-0.5 text-xs font-mono bg-slate-700 border border-slate-600 rounded">Esc</kbd> or <kbd className="px-1.5 py-0.5 text-xs font-mono bg-slate-700 border border-slate-600 rounded">?</kbd> to close
+                <div className="border-t border-primary/10 bg-[#050608]/70 px-6 py-3">
+                    <p className="text-center text-xs text-secondary/70">
+                        Press <kbd className="rounded border border-primary/10 bg-[#050608] px-1.5 py-0.5 font-mono text-xs text-secondary">Esc</kbd> or <kbd className="rounded border border-primary/10 bg-[#050608] px-1.5 py-0.5 font-mono text-xs text-secondary">?</kbd> to close
                     </p>
                 </div>
             </div>
