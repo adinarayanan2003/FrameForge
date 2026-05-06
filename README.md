@@ -47,7 +47,7 @@ pip install -r requirements.txt
 cd ..
 ```
 
-### 3. Configure OpenAI
+### 3. Configure LLM
 
 ```bash
 cp .env.example .env.local
@@ -126,8 +126,6 @@ add hormozi captions
 5. Review the proposed actions.
 6. Apply one action or apply all.
 7. Preview the result and render/export when it looks right.
-
-Caption highlights are stored as style metadata, so generated captions should not show raw `*asterisks*`.
 
 ## Common Commands
 
@@ -226,26 +224,6 @@ function EditorPage({ video, shots }) {
 }
 ```
 
-## Troubleshooting
-
-### Backend Says OpenAI Is Not Configured
-
-Run:
-
-```bash
-curl http://127.0.0.1:5001/health
-```
-
-If `openaiConfigured` is `false`, add `OPENAI_API_KEY` to `.env.local`, restart `npm run agent:dev`, and run the health check again.
-
-### Agent Chat Works But Edits Do Not Apply
-
-Make sure the backend and frontend are both running, the uploaded media still exists under `public/uploads`, and the browser is pointed at `http://localhost:3001`.
-
-### Captions Are Empty Or Weak
-
-Install FFmpeg, restart the backend inside the virtual environment, and try a clip with clear speech. For low-speech product or fashion videos, the caption agent can fall back to visual frame analysis.
-
 ## Documentation
 
 - [System Design](./docs/system_design.md) - backend integration and data flow
@@ -260,7 +238,6 @@ Install FFmpeg, restart the backend inside the virtual environment, and try a cl
 - Zustand with Immer
 - Tailwind CSS
 - Flask
-- OpenAI
 - faster-whisper
 - FFmpeg
 - Vitest
