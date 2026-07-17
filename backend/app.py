@@ -49,7 +49,6 @@ def _run(coro):
     finally:
         loop.close()
 
-
 def create_app():
     app = Flask(__name__)
     CORS(app)
